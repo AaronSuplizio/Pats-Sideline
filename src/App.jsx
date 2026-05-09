@@ -2,12 +2,13 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from './supabaseClient'
 import Scoreboard from './components/Scoreboard'
 import ScoreControls from './components/ScoreControls'
-import QuarterControls from './components/QuarterControls'
+import HalfControls from './components/HalfControls'
 import StatusBar from './components/StatusBar'
 import Chat, { JoinPrompt } from './components/Chat'
 import Moments from './components/Moments'
+import Timer from './components/Timer'
 
-const DEFAULT_GAME = { id: 1, seahawks_score: 0, opponent_score: 0, quarter: 1, updated_at: null }
+const DEFAULT_GAME = { id: 1, pats_score: 0, opponent_score: 0, half: 1, updated_at: null }
 
 async function persist(patch, updatedBy = null) {
   const { error } = await supabase
@@ -25,17 +26,27 @@ export default function App() {
   const [chatName, setChatName] = useState(() => localStorage.getItem('chat_name'))
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
   const [shareCopied, setShareCopied] = useState(false)
+  const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'dark')
+  const themeChannelRef = useRef(null)
 
   async function shareApp() {
     const url = window.location.href
     if (navigator.share) {
-      navigator.share({ title: 'Seahawks Scoreboard', text: 'Follow the game live! 🏈', url })
+      navigator.share({ title: 'Pats Sideline', text: 'Follow the game live! ⚽', url })
     } else {
       await navigator.clipboard.writeText(url)
       setShareCopied(true)
       setTimeout(() => setShareCopied(false), 2000)
     }
   }
+
+  function toggleTheme() {
+    const newTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(newTheme)
+    localStorage.setItem('app_theme', newTheme)
+    themeChannelRef.current?.send({ type: 'broadcast', event: 'theme', payload: { theme: newTheme } })
+  }
+
   const [showAdminPrompt, setShowAdminPrompt] = useState(false)
   const [adminInput, setAdminInput] = useState('')
   const [adminError, setAdminError] = useState(false)
@@ -89,28 +100,26 @@ export default function App() {
     setLoading(false)
   }, [])
 
-  // Optimistic update: apply change locally immediately, then write to DB.
-  // If the write fails, revert and show the error.
   const optimisticUpdate = useCallback(async (patch) => {
     setDbError(null)
     setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString() }))
     const error = await persist(patch)
     if (error) {
       setDbError(`Save failed: ${error.message}`)
-      fetchGame() // revert to server state
+      fetchGame()
     }
   }, [fetchGame])
 
   const persistAs = useCallback((patch) => persist(patch, chatName), [chatName])
 
   const adjustScore = useCallback((team, delta) => {
-    const key = team === 'seahawks' ? 'seahawks_score' : 'opponent_score'
-    const current = team === 'seahawks' ? game.seahawks_score : game.opponent_score
+    const key = team === 'pats' ? 'pats_score' : 'opponent_score'
+    const current = team === 'pats' ? game.pats_score : game.opponent_score
     const newValue = Math.max(0, current + delta)
     const patch = {
-      seahawks_score: game.seahawks_score,
+      pats_score: game.pats_score,
       opponent_score: game.opponent_score,
-      quarter: game.quarter,
+      half: game.half,
       [key]: newValue,
     }
     setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
@@ -119,28 +128,26 @@ export default function App() {
     })
   }, [game, chatName, fetchGame, persistAs])
 
-  const setQuarter = useCallback((q) => {
-    const quarter = Math.min(4, Math.max(1, q))
-    const patch = { seahawks_score: game.seahawks_score, opponent_score: game.opponent_score, quarter }
-    setGame(prev => ({ ...prev, quarter, updated_at: new Date().toISOString(), updated_by: chatName }))
+  const setHalf = useCallback((h) => {
+    const half = Math.min(2, Math.max(1, h))
+    const patch = { pats_score: game.pats_score, opponent_score: game.opponent_score, half }
+    setGame(prev => ({ ...prev, half, updated_at: new Date().toISOString(), updated_by: chatName }))
     persistAs(patch).then(err => {
       if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() }
     })
   }, [game, chatName, fetchGame, persistAs])
 
   const resetGame = useCallback(async () => {
-    const patch = { seahawks_score: 0, opponent_score: 0, quarter: game.quarter }
+    const patch = { pats_score: 0, opponent_score: 0, half: game.half }
     setConfirmingReset(false)
     setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
     const error = await persistAs(patch)
     if (error) { setDbError(`Reset failed: ${error.message}`); fetchGame() }
-  }, [game.quarter, chatName, fetchGame, persistAs])
+  }, [game.half, chatName, fetchGame, persistAs])
 
   useEffect(() => {
     fetchGame()
 
-    // No row-level filter here — only one row exists, and filters on UPDATE
-    // require REPLICA IDENTITY FULL which we haven't set.
     const channel = supabase
       .channel('game_state_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' },
@@ -150,6 +157,18 @@ export default function App() {
 
     return () => { supabase.removeChannel(channel) }
   }, [fetchGame])
+
+  useEffect(() => {
+    themeChannelRef.current = supabase
+      .channel('game_theme')
+      .on('broadcast', { event: 'theme' }, ({ payload }) => {
+        setTheme(payload.theme)
+        localStorage.setItem('app_theme', payload.theme)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(themeChannelRef.current) }
+  }, [])
 
   if (loading) {
     return (
@@ -161,11 +180,18 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app${theme === 'light' ? ' theme-light' : ''}`}>
       <header className="app-header">
-        <h1 className="app-title" onClick={handleTitleTap} style={{ cursor: 'default', userSelect: 'none' }}>
-          Seahawks Scoreboard{isAdmin && <span className="admin-badge">ADMIN</span>}
-        </h1>
+        <div className="header-top">
+          <h1 className="app-title" onClick={handleTitleTap} style={{ cursor: 'default', userSelect: 'none' }}>
+            Pats Sideline{isAdmin && <span className="admin-badge">ADMIN</span>}
+          </h1>
+          {isAdmin && (
+            <button className="btn-theme-toggle" onClick={toggleTheme}>
+              {theme === 'dark' ? 'LIGHT' : 'DARK'}
+            </button>
+          )}
+        </div>
         <StatusBar
           connected={connected}
           updatedAt={game.updated_at}
@@ -209,22 +235,24 @@ export default function App() {
       <main className="app-main">
         <div className="main-left">
           <Scoreboard
-            seahawksScore={game.seahawks_score}
+            patsScore={game.pats_score}
             opponentScore={game.opponent_score}
-            quarter={game.quarter}
+            half={game.half}
             onSetScore={(team, value) => {
-              const key = team === 'seahawks' ? 'seahawks_score' : 'opponent_score'
-              const patch = { seahawks_score: game.seahawks_score, opponent_score: game.opponent_score, quarter: game.quarter, [key]: value }
+              const key = team === 'pats' ? 'pats_score' : 'opponent_score'
+              const patch = { pats_score: game.pats_score, opponent_score: game.opponent_score, half: game.half, [key]: value }
               setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
               persistAs(patch).then(err => { if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() } })
             }}
           />
 
+          <Timer isAdmin={isAdmin} />
+
           <section className="controls-section">
             <div className="team-cards">
               <div className="team-card">
-                <div className="team-card-name seahawks-label">SEAHAWKS</div>
-                <ScoreControls team="seahawks" onAdjust={adjustScore} />
+                <div className="team-card-name pats-label">PATS</div>
+                <ScoreControls team="pats" onAdjust={adjustScore} />
               </div>
               <div className="team-card-divider" />
               <div className="team-card">
@@ -233,9 +261,9 @@ export default function App() {
               </div>
             </div>
 
-            <div className="quarter-card">
-              <div className="quarter-card-label">QUARTER</div>
-              <QuarterControls quarter={game.quarter} onSetQuarter={setQuarter} />
+            <div className="half-card">
+              <div className="half-card-label">HALF</div>
+              <HalfControls half={game.half} onSetHalf={setHalf} />
             </div>
 
             {confirmingReset ? (

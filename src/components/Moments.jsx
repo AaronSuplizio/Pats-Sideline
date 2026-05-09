@@ -3,15 +3,15 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 
 const MOMENTS = [
-  { id: 'touchdown',    label: 'Touchdown!',                  emoji: '🏈', color: '#69BE28', vibrate: [150, 50, 150, 50, 150, 50, 400] },
-  { id: 'interception', label: 'Interception!',               emoji: '🙌', color: '#4a90d9', vibrate: [200, 60, 300] },
-  { id: 'chains',       label: 'First Down, Move the Chains!',emoji: '⛓️', color: '#c0a060', vibrate: [80, 40, 80] },
-  { id: 'defense',      label: 'Defense!',                    emoji: '🛡️', color: '#5b8dd9', vibrate: [100, 30, 100, 30, 100] },
-  { id: 'wth',          label: 'What just happened?',         emoji: '🤮', color: '#9370db', vibrate: [500] },
-  { id: 'fired-up',     label: "Let's get fired up!",         emoji: '🔥', color: '#ff6b35', vibrate: [80, 30, 200, 30, 80] },
+  { id: 'goal',    label: 'Goal!!',         emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
+  { id: 'corner',  label: 'Corner Kick',    emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
+  { id: 'header',  label: 'Nice header!',   emoji: '🤕', color: '#c0a060', vibrate: [100, 30, 100] },
+  { id: 'fast',    label: 'Sooooo fast!',   emoji: '💨', color: '#69c0ff', vibrate: [80, 30, 200, 30, 80] },
+  { id: 'yellow',  label: 'Yellow Card!',   emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
+  { id: 'red',     label: 'Red Card!',      emoji: '🟥', color: '#ff4444', vibrate: [400, 100, 400] },
 ]
 
-const CONFETTI_COLORS = ['#69BE28', '#002244', '#ffffff', '#a8d858', '#001529']
+const CONFETTI_COLORS = ['#FF1493', '#000000', '#ffffff', '#0055A5', '#cc007a']
 
 function launchConfetti() {
   const canvas = document.createElement('canvas')
@@ -79,7 +79,7 @@ export default function Moments({ name }) {
     if (timerRef.current) clearTimeout(timerRef.current)
     if (navigator.vibrate) navigator.vibrate(moment.vibrate)
     setActive({ ...moment, key: Date.now(), from })
-    if (moment.id === 'touchdown') launchConfetti()
+    if (moment.id === 'goal') launchConfetti()
     timerRef.current = setTimeout(() => setActive(null), 2800)
   }
 
@@ -121,7 +121,7 @@ export default function Moments({ name }) {
 
       {active && createPortal(
         <div
-          className={`moment-overlay${active.id === 'touchdown' ? ' touchdown-shake' : ''}`}
+          className={`moment-overlay${active.id === 'goal' ? ' goal-shake' : ''}`}
           key={active.key}
           style={{ '--mc': active.color }}
         >

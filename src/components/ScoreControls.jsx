@@ -1,7 +1,6 @@
 const BUTTONS = [
-  { label: '+6', sub: 'TD',   delta: 6 },
-  { label: '+1', sub: 'PAT',  delta: 1 },
-  { label: '−1', sub: 'ADJUST', delta: -1, undo: true },
+  { label: '+1', sub: 'GOAL',  delta: 1 },
+  { label: '−1', sub: 'UNDO', delta: -1, undo: true },
 ]
 
 export default function ScoreControls({ team, onAdjust }) {

@@ -24,10 +24,10 @@ function AnimatedScore({ value, extraClass, onClick }) {
   )
 }
 
-const QUARTER_LABELS = ['Q1', 'Q2', 'Q3', 'Q4']
+const HALF_LABELS = ['1st', '2nd']
 
-export default function Scoreboard({ seahawksScore, opponentScore, quarter, onSetScore }) {
-  const [editing, setEditing] = useState(null) // 'seahawks' | 'opponent' | null
+export default function Scoreboard({ patsScore, opponentScore, half, onSetScore }) {
+  const [editing, setEditing] = useState(null) // 'pats' | 'opponent' | null
   const [editValue, setEditValue] = useState('')
   const inputRef = useRef(null)
 
@@ -48,23 +48,23 @@ export default function Scoreboard({ seahawksScore, opponentScore, quarter, onSe
     if (e.key === 'Escape') setEditing(null)
   }
 
-  const teamLabel = editing === 'seahawks' ? 'Seahawks' : 'Opponent'
+  const teamLabel = editing === 'pats' ? 'Pats' : 'Opponent'
 
   return (
     <>
       <div className="scoreboard">
         <div className="scoreboard-inner">
           <div className="score-block">
-            <div className="score-team-name seahawks-name">SEAHAWKS</div>
+            <div className="score-team-name pats-name">PATS</div>
             <AnimatedScore
-              value={seahawksScore}
-              extraClass="seahawks-score-color score-tappable"
-              onClick={() => openEdit('seahawks', seahawksScore)}
+              value={patsScore}
+              extraClass="pats-score-color score-tappable"
+              onClick={() => openEdit('pats', patsScore)}
             />
           </div>
 
           <div className="scoreboard-center">
-            <div className="quarter-badge">{QUARTER_LABELS[quarter - 1] ?? `Q${quarter}`}</div>
+            <div className="half-badge">{HALF_LABELS[half - 1] ?? '1st'} HALF</div>
             <div className="score-colon">:</div>
           </div>
 
@@ -89,7 +89,7 @@ export default function Scoreboard({ seahawksScore, opponentScore, quarter, onSe
               type="number"
               inputMode="numeric"
               min="0"
-              max="999"
+              max="99"
               value={editValue}
               onChange={e => setEditValue(e.target.value)}
               onKeyDown={handleKey}
