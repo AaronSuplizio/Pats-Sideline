@@ -26,7 +26,7 @@ export default function App() {
   const [chatName, setChatName] = useState(() => localStorage.getItem('chat_name'))
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
   const [shareCopied, setShareCopied] = useState(false)
-  const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'dark')
+  const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'light')
   const themeChannelRef = useRef(null)
 
   async function shareApp() {

@@ -23,17 +23,62 @@
 /* ── Light theme overrides ────────────────────────────────────────── */
 .theme-light {
   --bg:         #ffffff;
-  --bg-mid:     #f0f0f0;
-  --bg-card:    #e4e4e4;
-  --bg-dark:    #f5f5f5;
-  --accent:     #003087;
-  --accent-dim: rgba(0, 48, 135, 0.12);
-  --fg:         #111111;
-  --fg-muted:   #666666;
-  --dim:        rgba(0, 0, 0, 0.06);
-  --border:     rgba(0, 0, 0, 0.12);
+  --bg-mid:     #f0f3fb;
+  --bg-card:    #e4eaf8;
+  --bg-dark:    #ffffff;
+  --accent:     #1a31a8;
+  --accent-dim: rgba(26, 49, 168, 0.12);
+  --fg:         #0a1540;
+  --fg-muted:   #5a6a8a;
+  --dim:        rgba(0, 0, 0, 0.05);
+  --border:     rgba(26, 49, 168, 0.15);
   --red:        #cc2222;
+  --gold:       #F5C200;
 }
+
+/* ── Light mode: Pats gold overrides ─────────────────────────────── */
+.theme-light .pats-name,
+.theme-light .pats-label,
+.theme-light .pats-score-color { color: var(--gold); }
+
+.theme-light .app-header  { border-bottom-color: var(--gold); }
+.theme-light .scoreboard  { border-bottom-color: var(--gold); }
+.theme-light .chat-section { border-top-color: var(--gold); }
+
+.theme-light .btn-half-active {
+  background: rgba(245, 194, 0, 0.15);
+  color: #b38f00;
+  border-color: var(--gold);
+}
+
+.theme-light .admin-badge,
+.theme-light .score-edit-confirm,
+.theme-light .btn-join,
+.theme-light .btn-send,
+.theme-light .btn-score,
+.theme-light .btn-timer-start {
+  background: var(--gold);
+  color: var(--fg);
+}
+
+.theme-light .dot-connected {
+  background: var(--gold);
+  box-shadow: 0 0 6px var(--gold);
+}
+
+.theme-light .score-edit-title,
+.theme-light .chat-title,
+.theme-light .chat-join-title,
+.theme-light .chat-msg-name { color: var(--accent); }
+
+.theme-light .timer-running { color: var(--accent); }
+
+@keyframes scoreFlashLight {
+  0%   { text-shadow: none; color: var(--fg); }
+  30%  { text-shadow: 0 0 40px var(--gold), 0 0 80px var(--gold); color: var(--gold); }
+  100% { text-shadow: none; color: var(--fg); }
+}
+.theme-light .score-flash { animation: scoreFlashLight 0.7s ease-out forwards; }
 
 /* ── Reset ───────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -737,6 +782,21 @@ body {
   from { transform: translateY(0) rotate(-5deg); }
   to   { transform: translateY(-12px) rotate(5deg); }
 }
+/* Ripple rings for "Gooooo Pats!" */
+.ripple-ring {
+  position: absolute;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 3px solid var(--mc, #fff);
+  animation: rippleExpand 1.2s ease-out var(--delay, 0s) infinite;
+  pointer-events: none;
+}
+@keyframes rippleExpand {
+  0%   { transform: scale(0.4); opacity: 1; }
+  100% { transform: scale(4);   opacity: 0; }
+}
+
 @keyframes goalShake {
   0%,100% { transform: translate(0, 0) rotate(0deg); }
   10%     { transform: translate(-8px, -4px) rotate(-2deg); }

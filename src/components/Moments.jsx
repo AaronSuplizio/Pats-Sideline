@@ -3,12 +3,15 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 
 const MOMENTS = [
-  { id: 'goal',    label: 'Goal!!',         emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
-  { id: 'corner',  label: 'Corner Kick',    emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
-  { id: 'header',  label: 'Nice header!',   emoji: '🤕', color: '#c0a060', vibrate: [100, 30, 100] },
-  { id: 'fast',    label: 'Sooooo fast!',   emoji: '💨', color: '#69c0ff', vibrate: [80, 30, 200, 30, 80] },
-  { id: 'yellow',  label: 'Yellow Card!',   emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
-  { id: 'red',     label: 'Red Card!',      emoji: '🟥', color: '#ff4444', vibrate: [400, 100, 400] },
+  { id: 'goal',     label: 'Goal!!',               emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
+  { id: 'gopats',   label: 'Gooooo Pats!',          emoji: '⭐', color: '#F5C200', vibrate: [100, 50, 100, 50, 100, 50, 300], ripple: true },
+  { id: 'corner',   label: 'Corner Kick',           emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
+  { id: 'fast',     label: 'Sooooo fast!',          emoji: '💨', color: '#69c0ff', vibrate: [80, 30, 200, 30, 80] },
+  { id: 'footwork', label: 'Check the footwork!',   emoji: '👟', color: '#FF6B35', vibrate: [80, 30, 80, 30, 80] },
+  { id: 'pass',     label: 'What a pass!',          emoji: '🎯', color: '#a855f7', vibrate: [150, 60, 200] },
+  { id: 'save',     label: 'What a save!',          emoji: '🧤', color: '#22c55e', vibrate: [200, 50, 200, 50, 400] },
+  { id: 'yellow',   label: 'Yellow Card!',          emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
+  { id: 'pk',       label: 'Penalty Kick',          emoji: '🥅', color: '#FF1493', vibrate: [300, 100, 300] },
 ]
 
 const CONFETTI_COLORS = ['#FF1493', '#000000', '#ffffff', '#0055A5', '#cc007a']
@@ -121,10 +124,15 @@ export default function Moments({ name }) {
 
       {active && createPortal(
         <div
-          className={`moment-overlay${active.id === 'goal' ? ' goal-shake' : ''}`}
+          className={`moment-overlay${active.id === 'goal' ? ' goal-shake' : ''}${active.ripple ? ' ripple-anim' : ''}`}
           key={active.key}
           style={{ '--mc': active.color }}
         >
+          {active.ripple && <>
+            <div className="ripple-ring" style={{ '--delay': '0s' }} />
+            <div className="ripple-ring" style={{ '--delay': '0.4s' }} />
+            <div className="ripple-ring" style={{ '--delay': '0.8s' }} />
+          </>}
           <div className="moment-overlay-content">
             <div className="moment-overlay-emoji">{active.emoji}</div>
             <div className="moment-overlay-text">{active.label}</div>
