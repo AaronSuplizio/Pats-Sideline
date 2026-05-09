@@ -1,0 +1,274 @@
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supabase } from './supabaseClient'
+import Scoreboard from './components/Scoreboard'
+import ScoreControls from './components/ScoreControls'
+import QuarterControls from './components/QuarterControls'
+import StatusBar from './components/StatusBar'
+import Chat, { JoinPrompt } from './components/Chat'
+import Moments from './components/Moments'
+
+const DEFAULT_GAME = { id: 1, seahawks_score: 0, opponent_score: 0, quarter: 1, updated_at: null }
+
+async function persist(patch, updatedBy = null) {
+  const { error } = await supabase
+    .from('game_state')
+    .upsert({ id: 1, ...patch, updated_at: new Date().toISOString(), updated_by: updatedBy })
+  return error
+}
+
+export default function App() {
+  const [game, setGame] = useState(DEFAULT_GAME)
+  const [connected, setConnected] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [dbError, setDbError] = useState(null)
+  const [confirmingReset, setConfirmingReset] = useState(false)
+  const [chatName, setChatName] = useState(() => localStorage.getItem('chat_name'))
+  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
+  const [shareCopied, setShareCopied] = useState(false)
+
+  async function shareApp() {
+    const url = window.location.href
+    if (navigator.share) {
+      navigator.share({ title: 'Seahawks Scoreboard', text: 'Follow the game live! 🏈', url })
+    } else {
+      await navigator.clipboard.writeText(url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    }
+  }
+  const [showAdminPrompt, setShowAdminPrompt] = useState(false)
+  const [adminInput, setAdminInput] = useState('')
+  const [adminError, setAdminError] = useState(false)
+  const tapCountRef = useRef(0)
+  const tapTimerRef = useRef(null)
+
+  function handleTitleTap() {
+    if (isAdmin) return
+    tapCountRef.current += 1
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current)
+    tapTimerRef.current = setTimeout(() => { tapCountRef.current = 0 }, 1500)
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0
+      setShowAdminPrompt(true)
+    }
+  }
+
+  function submitAdminKey(e) {
+    e?.preventDefault()
+    if (adminInput === import.meta.env.VITE_ADMIN_KEY) {
+      localStorage.setItem('admin_unlocked', '1')
+      setIsAdmin(true)
+      setShowAdminPrompt(false)
+      setAdminInput('')
+      setAdminError(false)
+    } else {
+      setAdminError(true)
+    }
+  }
+
+  function closeAdminPrompt() {
+    setShowAdminPrompt(false)
+    setAdminInput('')
+    setAdminError(false)
+  }
+
+  const fetchGame = useCallback(async () => {
+    const { data, error: fetchErr } = await supabase
+      .from('game_state')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle()
+
+    if (fetchErr) {
+      setDbError(`Read failed: ${fetchErr.message}`)
+      setLoading(false)
+      return
+    }
+
+    if (data) setGame(data)
+    setLoading(false)
+  }, [])
+
+  // Optimistic update: apply change locally immediately, then write to DB.
+  // If the write fails, revert and show the error.
+  const optimisticUpdate = useCallback(async (patch) => {
+    setDbError(null)
+    setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString() }))
+    const error = await persist(patch)
+    if (error) {
+      setDbError(`Save failed: ${error.message}`)
+      fetchGame() // revert to server state
+    }
+  }, [fetchGame])
+
+  const persistAs = useCallback((patch) => persist(patch, chatName), [chatName])
+
+  const adjustScore = useCallback((team, delta) => {
+    const key = team === 'seahawks' ? 'seahawks_score' : 'opponent_score'
+    const current = team === 'seahawks' ? game.seahawks_score : game.opponent_score
+    const newValue = Math.max(0, current + delta)
+    const patch = {
+      seahawks_score: game.seahawks_score,
+      opponent_score: game.opponent_score,
+      quarter: game.quarter,
+      [key]: newValue,
+    }
+    setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
+    persistAs(patch).then(err => {
+      if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() }
+    })
+  }, [game, chatName, fetchGame, persistAs])
+
+  const setQuarter = useCallback((q) => {
+    const quarter = Math.min(4, Math.max(1, q))
+    const patch = { seahawks_score: game.seahawks_score, opponent_score: game.opponent_score, quarter }
+    setGame(prev => ({ ...prev, quarter, updated_at: new Date().toISOString(), updated_by: chatName }))
+    persistAs(patch).then(err => {
+      if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() }
+    })
+  }, [game, chatName, fetchGame, persistAs])
+
+  const resetGame = useCallback(async () => {
+    const patch = { seahawks_score: 0, opponent_score: 0, quarter: game.quarter }
+    setConfirmingReset(false)
+    setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
+    const error = await persistAs(patch)
+    if (error) { setDbError(`Reset failed: ${error.message}`); fetchGame() }
+  }, [game.quarter, chatName, fetchGame, persistAs])
+
+  useEffect(() => {
+    fetchGame()
+
+    // No row-level filter here — only one row exists, and filters on UPDATE
+    // require REPLICA IDENTITY FULL which we haven't set.
+    const channel = supabase
+      .channel('game_state_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'game_state' },
+        (payload) => { if (payload.new?.id === 1) setGame(payload.new) }
+      )
+      .subscribe((status) => setConnected(status === 'SUBSCRIBED'))
+
+    return () => { supabase.removeChannel(channel) }
+  }, [fetchGame])
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" />
+        <div className="loading-text">Loading game...</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="app">
+      <header className="app-header">
+        <h1 className="app-title" onClick={handleTitleTap} style={{ cursor: 'default', userSelect: 'none' }}>
+          Seahawks Scoreboard{isAdmin && <span className="admin-badge">ADMIN</span>}
+        </h1>
+        <StatusBar
+          connected={connected}
+          updatedAt={game.updated_at}
+          updatedBy={game.updated_by}
+          onRefresh={fetchGame}
+          onShare={shareApp}
+          shareCopied={shareCopied}
+        />
+      </header>
+
+      {dbError && (
+        <div className="db-error">
+          ⚠ {dbError}
+        </div>
+      )}
+
+      {showAdminPrompt && (
+        <div className="score-edit-overlay" onClick={closeAdminPrompt}>
+          <div className="score-edit-card" onClick={e => e.stopPropagation()}>
+            <div className="score-edit-title">Admin Access</div>
+            <form onSubmit={submitAdminKey}>
+              <input
+                className="score-edit-input"
+                type="password"
+                placeholder="Passphrase"
+                value={adminInput}
+                onChange={e => { setAdminInput(e.target.value); setAdminError(false) }}
+                onKeyDown={e => { if (e.key === 'Escape') closeAdminPrompt() }}
+                autoFocus
+              />
+            </form>
+            {adminError && <div className="admin-error">Incorrect passphrase</div>}
+            <div className="score-edit-actions">
+              <button className="btn score-edit-cancel" onClick={closeAdminPrompt}>Cancel</button>
+              <button className="btn score-edit-confirm" onClick={submitAdminKey}>Unlock</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <main className="app-main">
+        <div className="main-left">
+          <Scoreboard
+            seahawksScore={game.seahawks_score}
+            opponentScore={game.opponent_score}
+            quarter={game.quarter}
+            onSetScore={(team, value) => {
+              const key = team === 'seahawks' ? 'seahawks_score' : 'opponent_score'
+              const patch = { seahawks_score: game.seahawks_score, opponent_score: game.opponent_score, quarter: game.quarter, [key]: value }
+              setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
+              persistAs(patch).then(err => { if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() } })
+            }}
+          />
+
+          <section className="controls-section">
+            <div className="team-cards">
+              <div className="team-card">
+                <div className="team-card-name seahawks-label">SEAHAWKS</div>
+                <ScoreControls team="seahawks" onAdjust={adjustScore} />
+              </div>
+              <div className="team-card-divider" />
+              <div className="team-card">
+                <div className="team-card-name opponent-label">OPPONENT</div>
+                <ScoreControls team="opponent" onAdjust={adjustScore} />
+              </div>
+            </div>
+
+            <div className="quarter-card">
+              <div className="quarter-card-label">QUARTER</div>
+              <QuarterControls quarter={game.quarter} onSetQuarter={setQuarter} />
+            </div>
+
+            {confirmingReset ? (
+              <div className="reset-confirm">
+                <span className="reset-confirm-label">Zero out scores?</span>
+                <button className="btn btn-reset-confirm" onClick={resetGame}>Yes, reset</button>
+                <button className="btn btn-reset-cancel" onClick={() => setConfirmingReset(false)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="btn btn-reset" onClick={() => setConfirmingReset(true)}>
+                Reset Score
+              </button>
+            )}
+
+          </section>
+
+          <Moments name={chatName} />
+        </div>
+
+        <div className="main-right">
+          <section className="chat-section">
+            {chatName ? (
+              <Chat
+                name={chatName}
+                isAdmin={isAdmin}
+                onChangeName={() => { localStorage.removeItem('chat_name'); localStorage.removeItem('admin_unlocked'); setChatName(null); setIsAdmin(false) }}
+              />
+            ) : (
+              <JoinPrompt onJoin={name => { localStorage.setItem('chat_name', name); setChatName(name) }} />
+            )}
+          </section>
+        </div>
+      </main>
+    </div>
+  )
+}
