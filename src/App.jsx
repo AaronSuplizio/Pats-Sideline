@@ -30,6 +30,8 @@ export default function App() {
   const themeChannelRef = useRef(null)
   const [halftimeActive, setHalftimeActive] = useState(false)
   const halftimeChannelRef = useRef(null)
+  const [waterBreakActive, setWaterBreakActive] = useState(false)
+  const waterBreakChannelRef = useRef(null)
 
   async function shareApp() {
     const url = window.location.href
@@ -40,6 +42,12 @@ export default function App() {
       setShareCopied(true)
       setTimeout(() => setShareCopied(false), 2000)
     }
+  }
+
+  function toggleWaterBreak() {
+    const next = !waterBreakActive
+    setWaterBreakActive(next)
+    waterBreakChannelRef.current?.send({ type: 'broadcast', event: 'waterbreak', payload: { active: next } })
   }
 
   function toggleHalftime() {
@@ -189,6 +197,17 @@ export default function App() {
     return () => { supabase.removeChannel(halftimeChannelRef.current) }
   }, [])
 
+  useEffect(() => {
+    waterBreakChannelRef.current = supabase
+      .channel('game_waterbreak')
+      .on('broadcast', { event: 'waterbreak' }, ({ payload }) => {
+        setWaterBreakActive(payload.active)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(waterBreakChannelRef.current) }
+  }, [])
+
   if (loading) {
     return (
       <div className="loading-screen">
@@ -258,6 +277,7 @@ export default function App() {
             opponentScore={game.opponent_score}
             half={game.half}
             halftimeActive={halftimeActive}
+            waterBreakActive={waterBreakActive}
             onSetScore={(team, value) => {
               const key = team === 'pats' ? 'pats_score' : 'opponent_score'
               const patch = { pats_score: game.pats_score, opponent_score: game.opponent_score, half: game.half, [key]: value }
@@ -270,6 +290,7 @@ export default function App() {
             isAdmin={isAdmin}
             timerEndAt={game.timer_end_at}
             timerRemainingMs={game.timer_remaining_ms}
+            waterBreakActive={waterBreakActive}
             onTimerPatch={(patch) => {
               setGame(prev => ({ ...prev, ...patch }))
               persist(patch).then(err => { if (err) setDbError(`Timer save failed: ${err.message}`) })
@@ -295,12 +316,20 @@ export default function App() {
             </div>
 
             {isAdmin && (
-              <button
-                className={`btn-halftime${halftimeActive ? ' btn-halftime-active' : ''}`}
-                onClick={toggleHalftime}
-              >
-                {halftimeActive ? 'END HALFTIME' : 'HALFTIME'}
-              </button>
+              <div className="game-state-btns">
+                <button
+                  className={`btn-waterbreak${waterBreakActive ? ' btn-waterbreak-active' : ''}`}
+                  onClick={toggleWaterBreak}
+                >
+                  {waterBreakActive ? 'END WATER BREAK' : 'WATER BREAK'}
+                </button>
+                <button
+                  className={`btn-halftime${halftimeActive ? ' btn-halftime-active' : ''}`}
+                  onClick={toggleHalftime}
+                >
+                  {halftimeActive ? 'END HALFTIME' : 'HALFTIME'}
+                </button>
+              </div>
             )}
 
             {confirmingReset ? (

@@ -22,7 +22,7 @@ function parseTimeInput(str) {
   return m * 60 * 1000
 }
 
-export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch }) {
+export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch, waterBreakActive }) {
   const [isRunning, setIsRunning] = useState(false)
   const [displayMs, setDisplayMs] = useState(DEFAULT_MS)
   const [editing, setEditing] = useState(false)
@@ -32,6 +32,23 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
   const channelRef = useRef(null)
   const inputRef = useRef(null)
   const syncedRef = useRef(false)
+  const displayMsRef = useRef(DEFAULT_MS)
+  const isRunningRef = useRef(false)
+
+  useEffect(() => { displayMsRef.current = displayMs }, [displayMs])
+  useEffect(() => { isRunningRef.current = isRunning }, [isRunning])
+
+  // Pause timer when water break activates (admin only — others sync via game_timer broadcast)
+  useEffect(() => {
+    if (!waterBreakActive || !isAdmin) return
+    if (!isRunningRef.current) return
+    const left = Math.max(0, displayMsRef.current)
+    clearInterval(tickRef.current)
+    setIsRunning(false)
+    setDisplayMs(left)
+    broadcast({ action: 'pause', remainingMs: left })
+    onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
+  }, [waterBreakActive])
 
   function startTick(endAt) {
     clearInterval(tickRef.current)

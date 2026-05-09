@@ -634,6 +634,37 @@ body {
 }
 
 /* Halftime button */
+.game-state-btns {
+  display: flex;
+  gap: 8px;
+}
+.game-state-btns > * {
+  flex: 1;
+}
+
+.btn-waterbreak {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  background: rgba(0, 153, 204, 0.12);
+  color: #0099cc;
+  border: 2px solid #0099cc;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.btn-waterbreak-active {
+  background: #0099cc;
+  color: #000;
+}
+
 .btn-halftime {
   display: flex;
   align-items: center;
@@ -664,6 +695,16 @@ body {
   font-size: 0.6rem;
   font-weight: 700;
   letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  animation: halftimePulse 2s ease infinite;
+}
+.waterbreak-badge {
+  background: #0099cc;
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   padding: 3px 8px;
   border-radius: 4px;
   animation: halftimePulse 2s ease infinite;
