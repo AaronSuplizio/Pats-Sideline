@@ -8,7 +8,7 @@ import Chat, { JoinPrompt } from './components/Chat'
 import Moments from './components/Moments'
 import Timer from './components/Timer'
 
-const DEFAULT_GAME = { id: 1, pats_score: 0, opponent_score: 0, half: 1, updated_at: null }
+const DEFAULT_GAME = { id: 1, pats_score: 0, opponent_score: 0, half: 1, timer_end_at: null, timer_remaining_ms: 35 * 60 * 1000, updated_at: null }
 
 async function persist(patch, updatedBy = null) {
   const { error } = await supabase
@@ -246,7 +246,15 @@ export default function App() {
             }}
           />
 
-          <Timer isAdmin={isAdmin} />
+          <Timer
+            isAdmin={isAdmin}
+            timerEndAt={game.timer_end_at}
+            timerRemainingMs={game.timer_remaining_ms}
+            onTimerPatch={(patch) => {
+              setGame(prev => ({ ...prev, ...patch }))
+              persist(patch).then(err => { if (err) setDbError(`Timer save failed: ${err.message}`) })
+            }}
+          />
 
           <section className="controls-section">
             <div className="team-cards">

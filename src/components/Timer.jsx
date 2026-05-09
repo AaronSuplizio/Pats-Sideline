@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react'
-import { supabase } from '../supabaseClient'
 
 const DEFAULT_MS = 35 * 60 * 1000
 
@@ -10,7 +9,6 @@ function formatTime(ms) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-// Accepts "35", "35:00", "12:30", etc.
 function parseTimeInput(str) {
   const trimmed = str.trim()
   if (trimmed.includes(':')) {
@@ -23,109 +21,76 @@ function parseTimeInput(str) {
   return m * 60 * 1000
 }
 
-export default function Timer({ isAdmin }) {
-  const [running, setRunning] = useState(false)
-  const [remainingMs, setRemainingMs] = useState(DEFAULT_MS)
+export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch }) {
+  const remaining = timerRemainingMs ?? DEFAULT_MS
+  const [displayMs, setDisplayMs] = useState(
+    timerEndAt ? Math.max(0, timerEndAt - Date.now()) : remaining
+  )
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [editError, setEditError] = useState(false)
-  const endAtRef = useRef(null)
   const tickRef = useRef(null)
-  const channelRef = useRef(null)
   const inputRef = useRef(null)
 
-  function startTick(endAt) {
-    endAtRef.current = endAt
+  // Sync with DB state whenever props change
+  useEffect(() => {
     clearInterval(tickRef.current)
-    tickRef.current = setInterval(() => {
-      const left = endAtRef.current - Date.now()
-      if (left <= 0) {
-        clearInterval(tickRef.current)
-        setRemainingMs(0)
-        setRunning(false)
-        endAtRef.current = null
-      } else {
-        setRemainingMs(left)
-      }
-    }, 250)
-  }
+    const endAt = timerEndAt ? Number(timerEndAt) : null
+    if (endAt && endAt > Date.now()) {
+      setDisplayMs(Math.max(0, endAt - Date.now()))
+      tickRef.current = setInterval(() => {
+        const left = endAt - Date.now()
+        if (left <= 0) {
+          clearInterval(tickRef.current)
+          setDisplayMs(0)
+        } else {
+          setDisplayMs(left)
+        }
+      }, 250)
+    } else {
+      setDisplayMs(timerRemainingMs ?? DEFAULT_MS)
+    }
+    return () => clearInterval(tickRef.current)
+  }, [timerEndAt, timerRemainingMs])
+
+  const endAtNum = timerEndAt ? Number(timerEndAt) : null
+  const running = !!(endAtNum && endAtNum > Date.now())
+  const isZero = displayMs === 0
 
   function handleStart() {
-    const endAt = Date.now() + remainingMs
-    startTick(endAt)
-    setRunning(true)
-    channelRef.current?.send({ type: 'broadcast', event: 'timer', payload: { action: 'start', endAt } })
+    const endAt = Date.now() + displayMs
+    onTimerPatch({ timer_end_at: endAt, timer_remaining_ms: displayMs })
   }
 
   function handlePause() {
-    clearInterval(tickRef.current)
-    const left = endAtRef.current ? endAtRef.current - Date.now() : remainingMs
-    const snapped = Math.max(0, left)
-    endAtRef.current = null
-    setRunning(false)
-    setRemainingMs(snapped)
-    channelRef.current?.send({ type: 'broadcast', event: 'timer', payload: { action: 'pause', remainingMs: snapped } })
+    const left = Math.max(0, endAtNum ? endAtNum - Date.now() : displayMs)
+    onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
   }
 
   function handleReset() {
-    clearInterval(tickRef.current)
-    endAtRef.current = null
-    setRunning(false)
-    setRemainingMs(DEFAULT_MS)
-    channelRef.current?.send({ type: 'broadcast', event: 'timer', payload: { action: 'reset' } })
+    onTimerPatch({ timer_end_at: null, timer_remaining_ms: DEFAULT_MS })
   }
 
   function openEdit() {
     if (!isAdmin) return
-    // Pause first if running
     if (running) handlePause()
-    setEditValue(formatTime(remainingMs))
+    setEditValue(formatTime(displayMs))
     setEditError(false)
     setEditing(true)
-    setTimeout(() => { inputRef.current?.select() }, 50)
+    setTimeout(() => inputRef.current?.select(), 50)
   }
 
   function confirmEdit() {
     const ms = parseTimeInput(editValue)
     if (ms === null) { setEditError(true); return }
-    setRemainingMs(ms)
     setEditing(false)
-    channelRef.current?.send({ type: 'broadcast', event: 'timer', payload: { action: 'pause', remainingMs: ms } })
+    onTimerPatch({ timer_end_at: null, timer_remaining_ms: ms })
   }
 
   function handleEditKey(e) {
     if (e.key === 'Enter') confirmEdit()
     if (e.key === 'Escape') setEditing(false)
   }
-
-  useEffect(() => {
-    channelRef.current = supabase
-      .channel('game_timer')
-      .on('broadcast', { event: 'timer' }, ({ payload }) => {
-        if (payload.action === 'start') {
-          startTick(payload.endAt)
-          setRunning(true)
-        } else if (payload.action === 'pause') {
-          clearInterval(tickRef.current)
-          endAtRef.current = null
-          setRunning(false)
-          setRemainingMs(payload.remainingMs)
-        } else if (payload.action === 'reset') {
-          clearInterval(tickRef.current)
-          endAtRef.current = null
-          setRunning(false)
-          setRemainingMs(DEFAULT_MS)
-        }
-      })
-      .subscribe()
-
-    return () => {
-      clearInterval(tickRef.current)
-      supabase.removeChannel(channelRef.current)
-    }
-  }, [])
-
-  const isZero = remainingMs === 0
 
   return (
     <>
@@ -136,7 +101,7 @@ export default function Timer({ isAdmin }) {
           onClick={openEdit}
           title={isAdmin ? 'Tap to edit' : undefined}
         >
-          {formatTime(remainingMs)}
+          {formatTime(displayMs)}
         </div>
         {isAdmin && (
           <div className="timer-controls">
