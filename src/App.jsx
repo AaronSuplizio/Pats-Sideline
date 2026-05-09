@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createPortal } from 'react-dom'
 import { supabase } from './supabaseClient'
 import Scoreboard from './components/Scoreboard'
 import ScoreControls from './components/ScoreControls'
@@ -258,6 +257,7 @@ export default function App() {
             patsScore={game.pats_score}
             opponentScore={game.opponent_score}
             half={game.half}
+            halftimeActive={halftimeActive}
             onSetScore={(team, value) => {
               const key = team === 'pats' ? 'pats_score' : 'opponent_score'
               const patch = { pats_score: game.pats_score, opponent_score: game.opponent_score, half: game.half, [key]: value }
@@ -335,16 +335,6 @@ export default function App() {
         </div>
       </main>
 
-      {halftimeActive && createPortal(
-        <div className="halftime-overlay" onClick={() => setHalftimeActive(false)}>
-          <div className="halftime-content">
-            <div className="halftime-emoji">⚽</div>
-            <div className="halftime-text">HALFTIME</div>
-            <div className="halftime-sub">Tap to dismiss</div>
-          </div>
-        </div>,
-        document.body
-      )}
     </div>
   )
 }
