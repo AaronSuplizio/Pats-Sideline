@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from './supabaseClient'
 import Scoreboard from './components/Scoreboard'
 import ScoreControls from './components/ScoreControls'
@@ -28,6 +29,8 @@ export default function App() {
   const [shareCopied, setShareCopied] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'light')
   const themeChannelRef = useRef(null)
+  const [halftimeActive, setHalftimeActive] = useState(false)
+  const halftimeChannelRef = useRef(null)
 
   async function shareApp() {
     const url = window.location.href
@@ -38,6 +41,12 @@ export default function App() {
       setShareCopied(true)
       setTimeout(() => setShareCopied(false), 2000)
     }
+  }
+
+  function toggleHalftime() {
+    const next = !halftimeActive
+    setHalftimeActive(next)
+    halftimeChannelRef.current?.send({ type: 'broadcast', event: 'halftime', payload: { active: next } })
   }
 
   function toggleTheme() {
@@ -170,6 +179,17 @@ export default function App() {
     return () => { supabase.removeChannel(themeChannelRef.current) }
   }, [])
 
+  useEffect(() => {
+    halftimeChannelRef.current = supabase
+      .channel('game_halftime')
+      .on('broadcast', { event: 'halftime' }, ({ payload }) => {
+        setHalftimeActive(payload.active)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(halftimeChannelRef.current) }
+  }, [])
+
   if (loading) {
     return (
       <div className="loading-screen">
@@ -274,6 +294,15 @@ export default function App() {
               <HalfControls half={game.half} onSetHalf={setHalf} />
             </div>
 
+            {isAdmin && (
+              <button
+                className={`btn-halftime${halftimeActive ? ' btn-halftime-active' : ''}`}
+                onClick={toggleHalftime}
+              >
+                {halftimeActive ? 'END HALFTIME' : 'HALFTIME'}
+              </button>
+            )}
+
             {confirmingReset ? (
               <div className="reset-confirm">
                 <span className="reset-confirm-label">Zero out scores?</span>
@@ -305,6 +334,17 @@ export default function App() {
           </section>
         </div>
       </main>
+
+      {halftimeActive && createPortal(
+        <div className="halftime-overlay" onClick={() => setHalftimeActive(false)}>
+          <div className="halftime-content">
+            <div className="halftime-emoji">⚽</div>
+            <div className="halftime-text">HALFTIME</div>
+            <div className="halftime-sub">Tap to dismiss</div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
