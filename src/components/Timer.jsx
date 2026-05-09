@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../supabaseClient'
 
 const DEFAULT_MS = 35 * 60 * 1000
 
@@ -22,58 +23,95 @@ function parseTimeInput(str) {
 }
 
 export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch }) {
-  const remaining = timerRemainingMs ?? DEFAULT_MS
-  const [displayMs, setDisplayMs] = useState(
-    timerEndAt ? Math.max(0, timerEndAt - Date.now()) : remaining
-  )
+  const [isRunning, setIsRunning] = useState(false)
+  const [displayMs, setDisplayMs] = useState(DEFAULT_MS)
   const [editing, setEditing] = useState(false)
   const [editValue, setEditValue] = useState('')
   const [editError, setEditError] = useState(false)
   const tickRef = useRef(null)
+  const channelRef = useRef(null)
   const inputRef = useRef(null)
+  const syncedRef = useRef(false)
 
-  // Sync with DB state whenever props change
-  useEffect(() => {
+  function startTick(endAt) {
     clearInterval(tickRef.current)
+    setIsRunning(true)
+    setDisplayMs(Math.max(0, endAt - Date.now()))
+    tickRef.current = setInterval(() => {
+      const left = endAt - Date.now()
+      if (left <= 0) {
+        clearInterval(tickRef.current)
+        setDisplayMs(0)
+        setIsRunning(false)
+      } else {
+        setDisplayMs(left)
+      }
+    }, 250)
+  }
+
+  function applyPause(ms) {
+    clearInterval(tickRef.current)
+    setIsRunning(false)
+    setDisplayMs(ms)
+  }
+
+  // Sync initial state from DB (runs once when DB data arrives via props)
+  useEffect(() => {
+    if (syncedRef.current) return
+    if (timerEndAt === undefined && timerRemainingMs === undefined) return
+    syncedRef.current = true
     const endAt = timerEndAt ? Number(timerEndAt) : null
     if (endAt && endAt > Date.now()) {
-      setDisplayMs(Math.max(0, endAt - Date.now()))
-      tickRef.current = setInterval(() => {
-        const left = endAt - Date.now()
-        if (left <= 0) {
-          clearInterval(tickRef.current)
-          setDisplayMs(0)
-        } else {
-          setDisplayMs(left)
-        }
-      }, 250)
+      startTick(endAt)
     } else {
-      setDisplayMs(timerRemainingMs ?? DEFAULT_MS)
+      applyPause(timerRemainingMs ?? DEFAULT_MS)
     }
-    return () => clearInterval(tickRef.current)
   }, [timerEndAt, timerRemainingMs])
 
-  const endAtNum = timerEndAt ? Number(timerEndAt) : null
-  const running = !!(endAtNum && endAtNum > Date.now())
-  const isZero = displayMs === 0
+  // Broadcast channel for real-time sync between connected users
+  useEffect(() => {
+    channelRef.current = supabase
+      .channel('game_timer')
+      .on('broadcast', { event: 'timer' }, ({ payload }) => {
+        if (payload.action === 'start') {
+          startTick(Number(payload.endAt))
+        } else if (payload.action === 'pause') {
+          applyPause(payload.remainingMs)
+        } else if (payload.action === 'reset') {
+          applyPause(DEFAULT_MS)
+        }
+      })
+      .subscribe()
+    return () => { clearInterval(tickRef.current); supabase.removeChannel(channelRef.current) }
+  }, [])
+
+  function broadcast(payload) {
+    channelRef.current?.send({ type: 'broadcast', event: 'timer', payload })
+  }
 
   function handleStart() {
     const endAt = Date.now() + displayMs
+    startTick(endAt)
+    broadcast({ action: 'start', endAt })
     onTimerPatch({ timer_end_at: endAt, timer_remaining_ms: displayMs })
   }
 
   function handlePause() {
-    const left = Math.max(0, endAtNum ? endAtNum - Date.now() : displayMs)
+    const left = Math.max(0, displayMs)
+    applyPause(left)
+    broadcast({ action: 'pause', remainingMs: left })
     onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
   }
 
   function handleReset() {
+    applyPause(DEFAULT_MS)
+    broadcast({ action: 'reset' })
     onTimerPatch({ timer_end_at: null, timer_remaining_ms: DEFAULT_MS })
   }
 
   function openEdit() {
     if (!isAdmin) return
-    if (running) handlePause()
+    if (isRunning) handlePause()
     setEditValue(formatTime(displayMs))
     setEditError(false)
     setEditing(true)
@@ -84,6 +122,8 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     const ms = parseTimeInput(editValue)
     if (ms === null) { setEditError(true); return }
     setEditing(false)
+    applyPause(ms)
+    broadcast({ action: 'pause', remainingMs: ms })
     onTimerPatch({ timer_end_at: null, timer_remaining_ms: ms })
   }
 
@@ -92,12 +132,14 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     if (e.key === 'Escape') setEditing(false)
   }
 
+  const isZero = displayMs === 0
+
   return (
     <>
       <div className="timer-section">
         <div className="timer-label">UNOFFICIAL TIME</div>
         <div
-          className={`timer-display${isZero ? ' timer-zero' : running ? ' timer-running' : ''}${isAdmin ? ' timer-tappable' : ''}`}
+          className={`timer-display${isZero ? ' timer-zero' : isRunning ? ' timer-running' : ''}${isAdmin ? ' timer-tappable' : ''}`}
           onClick={openEdit}
           title={isAdmin ? 'Tap to edit' : undefined}
         >
@@ -106,11 +148,11 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
         {isAdmin && (
           <div className="timer-controls">
             <button
-              className={`btn-timer-toggle ${running ? 'btn-timer-pause' : 'btn-timer-start'}`}
-              onClick={running ? handlePause : handleStart}
-              disabled={isZero && !running}
+              className={`btn-timer-toggle ${isRunning ? 'btn-timer-pause' : 'btn-timer-start'}`}
+              onClick={isRunning ? handlePause : handleStart}
+              disabled={isZero && !isRunning}
             >
-              {running ? 'PAUSE' : 'START'}
+              {isRunning ? 'PAUSE' : 'START'}
             </button>
             <button className="btn-timer-reset" onClick={handleReset}>
               RESET
