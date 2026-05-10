@@ -581,21 +581,21 @@ body {
   display: flex;
   gap: 6px;
 }
-.half-selector .btn-half { flex: 1; }
+.half-selector .btn-half { flex: 1.4; }
 .btn-halftime-inline {
-  flex: 1.4;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px 6px;
+  padding: 8px 4px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--accent);
   background: var(--accent-dim);
   color: var(--accent);
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   cursor: pointer;
   transition: all 0.12s;
   -webkit-tap-highlight-color: transparent;
@@ -689,6 +689,29 @@ body {
 }
 
 /* Halftime button */
+.admin-box {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+.admin-box-label {
+  position: absolute;
+  top: -9px;
+  left: 10px;
+  background: var(--bg-card);
+  padding: 0 6px;
+  font-family: var(--font-ui);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+}
+
 .game-state-btns {
   display: flex;
   gap: 8px;

@@ -354,7 +354,8 @@ export default function App() {
             </div>
 
             {isAdmin && (
-              <>
+              <div className="admin-box">
+                <div className="admin-box-label">Admin</div>
                 <div className="game-state-btns">
                   <button
                     className={`btn-playstopped${playStoppedActive ? ' btn-playstopped-active' : ''}`}
@@ -375,7 +376,7 @@ export default function App() {
                 >
                   {gameOver ? 'CLEAR FINAL' : 'FINAL SCORE'}
                 </button>
-              </>
+              </div>
             )}
 
           </section>
