@@ -62,8 +62,8 @@
 }
 
 .theme-light .dot-connected {
-  background: var(--gold);
-  box-shadow: 0 0 6px var(--gold);
+  background: #16a34a;
+  box-shadow: 0 0 6px #16a34a;
 }
 
 .theme-light .score-edit-title,
@@ -179,6 +179,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 .status-left {
   display: flex;
@@ -186,11 +188,14 @@ body {
   gap: 6px;
   font-size: 0.78rem;
   color: var(--fg-muted);
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .status-actions {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
 }
 .connection-dot {
   width: 7px;
@@ -198,8 +203,9 @@ body {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.dot-connected    { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-.dot-disconnected { background: var(--red); }
+.dot-connected    { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+.dot-disconnected { background: var(--fg-muted); }
+.dot-final        { background: var(--red); box-shadow: 0 0 6px var(--red); }
 .connection-label { font-weight: 600; color: var(--fg); }
 .last-updated     { color: var(--fg-muted); }
 
@@ -1176,6 +1182,25 @@ body {
   align-items: center;
   gap: 8px;
 }
+.chat-font-controls {
+  display: flex;
+  gap: 2px;
+}
+.btn-font-size {
+  background: var(--dim);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--fg-muted);
+  font-family: var(--font-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1.4;
+}
+.btn-font-size:disabled { opacity: 0.3; cursor: default; }
+.btn-font-size:not(:disabled):active { opacity: 0.7; }
 
 /* ── Admin ───────────────────────────────────────────────────────── */
 .admin-badge {

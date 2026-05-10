@@ -40,6 +40,8 @@ function JoinPrompt({ onJoin }) {
   )
 }
 
+const FONT_SIZES = [13, 15, 17, 20]
+
 export default function Chat({ name, isAdmin, onChangeName }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -47,7 +49,19 @@ export default function Chat({ name, isAdmin, onChangeName }) {
   const [sendError, setSendError] = useState(null)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [activeMsgId, setActiveMsgId] = useState(null)
+  const [fontIdx, setFontIdx] = useState(() => {
+    const saved = parseInt(localStorage.getItem('chat_font_idx'), 10)
+    return isNaN(saved) ? 1 : Math.min(Math.max(saved, 0), FONT_SIZES.length - 1)
+  })
   const bottomRef = useRef(null)
+
+  function changeFontSize(delta) {
+    setFontIdx(prev => {
+      const next = Math.min(Math.max(prev + delta, 0), FONT_SIZES.length - 1)
+      localStorage.setItem('chat_font_idx', next)
+      return next
+    })
+  }
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -133,6 +147,10 @@ export default function Chat({ name, isAdmin, onChangeName }) {
       <div className="chat-header">
         <span className="chat-title">Parent Chat</span>
         <div className="chat-header-right">
+          <div className="chat-font-controls">
+            <button className="btn-font-size" onClick={() => changeFontSize(-1)} disabled={fontIdx === 0}>A−</button>
+            <button className="btn-font-size" onClick={() => changeFontSize(1)} disabled={fontIdx === FONT_SIZES.length - 1}>A+</button>
+          </div>
           {isAdmin && (
             confirmingClear ? (
               <span className="chat-clear-confirm">
@@ -152,7 +170,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
         </div>
       </div>
 
-      <div className="chat-messages">
+      <div className="chat-messages" style={{ fontSize: FONT_SIZES[fontIdx] + 'px' }}>
         {messages.length === 0 && (
           <p className="chat-empty">No messages yet — say something! 👋</p>
         )}

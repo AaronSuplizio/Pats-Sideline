@@ -269,6 +269,7 @@ export default function App() {
           isAdmin={isAdmin}
           isRealAdmin={isRealAdmin}
           onToggleAdminView={() => setIsAdmin(a => !a)}
+          gameOver={gameOver}
         />
       </header>
 

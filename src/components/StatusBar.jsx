@@ -20,7 +20,7 @@ function formatAge(s) {
   return `${Math.floor(s / 3600)}h ago`
 }
 
-export default function StatusBar({ connected, updatedAt, updatedBy, onShare, shareCopied, isAdmin, isRealAdmin, onToggleAdminView }) {
+export default function StatusBar({ connected, updatedAt, updatedBy, onShare, shareCopied, isAdmin, isRealAdmin, onToggleAdminView, gameOver }) {
   const seconds = useSecondsSince(updatedAt)
   const age = formatAge(seconds)
 
@@ -33,8 +33,10 @@ export default function StatusBar({ connected, updatedAt, updatedBy, onShare, sh
   return (
     <div className="status-bar">
       <div className="status-left">
-        <span className={`connection-dot ${connected ? 'dot-connected' : 'dot-disconnected'}`} />
-        <span className="connection-label">{connected ? 'Live' : 'Offline'}</span>
+        <span className={`connection-dot ${gameOver ? 'dot-final' : connected ? 'dot-connected' : 'dot-disconnected'}`} />
+        <span className="connection-label">
+          {gameOver ? 'Final' : connected ? 'Live' : 'Offline'}
+        </span>
         {updatedMsg && <span className="last-updated">{updatedMsg}</span>}
       </div>
       <div className="status-actions">
