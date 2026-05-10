@@ -40,7 +40,7 @@ function JoinPrompt({ onJoin }) {
   )
 }
 
-const FONT_SIZES = [13, 15, 17, 20]
+const FONT_SIZES = [13, 15, 17, 20, 24, 28, 34]
 
 export default function Chat({ name, isAdmin, onChangeName }) {
   const [messages, setMessages] = useState([])
