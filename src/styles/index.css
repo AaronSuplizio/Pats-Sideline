@@ -1287,8 +1287,8 @@ body {
 .chat-msg-mine { align-self: flex-end; align-items: flex-end; }
 .chat-msg-meta { display: flex; align-items: baseline; gap: 6px; }
 .chat-msg-mine .chat-msg-meta { flex-direction: row-reverse; }
-.chat-msg-name { font-size: 0.7rem; font-weight: 600; color: var(--accent); }
-.chat-msg-time { font-size: 0.66rem; color: var(--fg-muted); }
+.chat-msg-name { font-size: 0.75em; font-weight: 600; color: var(--accent); }
+.chat-msg-time { font-size: 0.7em; color: var(--fg-muted); }
 .chat-delete-btn {
   display: none;
   background: none;
