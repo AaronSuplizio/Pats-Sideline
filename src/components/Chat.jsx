@@ -176,24 +176,25 @@ export default function Chat({ name, isAdmin, onChangeName }) {
         )}
         {messages.map(msg => {
           const isMyMsg = msg.name === name && typeof msg.id === 'number'
+          const canDelete = isMyMsg || isAdmin
           const isActive = msg.id === activeMsgId
           return (
             <div
               key={msg.id}
               className={`chat-msg ${isMyMsg ? 'chat-msg-mine' : ''} ${isActive ? 'chat-msg-active' : ''}`}
-              onClick={isMyMsg ? () => toggleActive(msg.id) : undefined}
+              onClick={canDelete ? () => toggleActive(msg.id) : undefined}
             >
               <div className="chat-msg-meta">
                 <span className="chat-msg-name">{msg.name}</span>
                 <span className="chat-msg-time">{formatAge(msg.created_at)}</span>
               </div>
               <div className="chat-msg-bubble">{msg.message}</div>
-              {isMyMsg && (
+              {canDelete && (
                 <button
                   className="chat-delete-btn"
                   onClick={e => { e.stopPropagation(); deleteMessage(msg.id) }}
                 >
-                  Unsend
+                  {isMyMsg ? 'Unsend' : 'Delete'}
                 </button>
               )}
             </div>
