@@ -331,6 +331,38 @@ body {
 .score-edit-input::-webkit-outer-spin-button,
 .score-edit-input::-webkit-inner-spin-button { -webkit-appearance: none; }
 .score-edit-input:focus { border-color: var(--accent); }
+
+.timer-edit-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  justify-content: center;
+}
+.timer-edit-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+.timer-edit-input {
+  font-size: 2.5rem;
+}
+.timer-edit-colon {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--fg-muted);
+  padding-bottom: 28px;
+}
+.timer-edit-label {
+  font-family: var(--font-ui);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--fg-muted);
+}
+
 .score-edit-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;

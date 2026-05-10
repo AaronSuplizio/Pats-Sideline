@@ -10,27 +10,17 @@ function formatTime(ms) {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-function parseTimeInput(str) {
-  const trimmed = str.trim()
-  if (trimmed.includes(':')) {
-    const [m, s] = trimmed.split(':').map(Number)
-    if (isNaN(m) || isNaN(s) || s > 59) return null
-    return (m * 60 + s) * 1000
-  }
-  const m = Number(trimmed)
-  if (isNaN(m) || m < 0) return null
-  return m * 60 * 1000
-}
 
 export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch, waterBreakActive, gameOver }) {
   const [isRunning, setIsRunning] = useState(false)
   const [displayMs, setDisplayMs] = useState(DEFAULT_MS)
   const [editing, setEditing] = useState(false)
-  const [editValue, setEditValue] = useState('')
+  const [editMinutes, setEditMinutes] = useState('')
+  const [editSeconds, setEditSeconds] = useState('')
   const [editError, setEditError] = useState(false)
   const tickRef = useRef(null)
   const channelRef = useRef(null)
-  const inputRef = useRef(null)
+  const minutesRef = useRef(null)
   const syncedRef = useRef(false)
   const displayMsRef = useRef(DEFAULT_MS)
   const isRunningRef = useRef(false)
@@ -141,22 +131,31 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
   function openEdit() {
     if (!isAdmin) return
     if (isRunning) handlePause()
-    setEditValue(formatTime(displayMs))
+    const totalSeconds = Math.max(0, Math.ceil(displayMsRef.current / 1000))
+    setEditMinutes(String(Math.floor(totalSeconds / 60)))
+    setEditSeconds(String(totalSeconds % 60))
     setEditError(false)
     setEditing(true)
-    setTimeout(() => inputRef.current?.select(), 50)
+    setTimeout(() => { minutesRef.current?.focus(); minutesRef.current?.select() }, 50)
   }
 
   function confirmEdit() {
-    const ms = parseTimeInput(editValue)
-    if (ms === null) { setEditError(true); return }
+    const m = parseInt(editMinutes, 10)
+    const s = parseInt(editSeconds || '0', 10)
+    if (isNaN(m) || isNaN(s) || m < 0 || s < 0 || s > 59) { setEditError(true); return }
+    const ms = (m * 60 + s) * 1000
     setEditing(false)
     applyPause(ms)
     broadcast({ action: 'pause', remainingMs: ms })
     onTimerPatch({ timer_end_at: null, timer_remaining_ms: ms })
   }
 
-  function handleEditKey(e) {
+  function handleMinutesKey(e) {
+    if (e.key === 'Enter') confirmEdit()
+    if (e.key === 'Escape') setEditing(false)
+  }
+
+  function handleSecondsKey(e) {
     if (e.key === 'Enter') confirmEdit()
     if (e.key === 'Escape') setEditing(false)
   }
@@ -194,18 +193,40 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
         <div className="score-edit-overlay" onClick={() => setEditing(false)}>
           <div className="score-edit-card" onClick={e => e.stopPropagation()}>
             <div className="score-edit-title">Set Time</div>
-            <input
-              ref={inputRef}
-              className="score-edit-input"
-              type="text"
-              inputMode="numeric"
-              placeholder="MM:SS"
-              value={editValue}
-              onChange={e => { setEditValue(e.target.value); setEditError(false) }}
-              onKeyDown={handleEditKey}
-              autoFocus
-            />
-            {editError && <div className="admin-error">Enter time as MM:SS or minutes</div>}
+            <div className="timer-edit-fields">
+              <div className="timer-edit-field">
+                <input
+                  ref={minutesRef}
+                  className="score-edit-input timer-edit-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="99"
+                  placeholder="35"
+                  value={editMinutes}
+                  onChange={e => { setEditMinutes(e.target.value); setEditError(false) }}
+                  onKeyDown={handleMinutesKey}
+                  autoFocus
+                />
+                <div className="timer-edit-label">MIN</div>
+              </div>
+              <div className="timer-edit-colon">:</div>
+              <div className="timer-edit-field">
+                <input
+                  className="score-edit-input timer-edit-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="0"
+                  max="59"
+                  placeholder="00"
+                  value={editSeconds}
+                  onChange={e => { setEditSeconds(e.target.value); setEditError(false) }}
+                  onKeyDown={handleSecondsKey}
+                />
+                <div className="timer-edit-label">SEC</div>
+              </div>
+            </div>
+            {editError && <div className="admin-error">Enter valid minutes (0–99) and seconds (0–59)</div>}
             <div className="score-edit-actions">
               <button className="btn score-edit-cancel" onClick={() => setEditing(false)}>Cancel</button>
               <button className="btn score-edit-confirm" onClick={confirmEdit}>Set Time</button>
