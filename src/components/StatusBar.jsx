@@ -20,7 +20,7 @@ function formatAge(s) {
   return `${Math.floor(s / 3600)}h ago`
 }
 
-export default function StatusBar({ connected, updatedAt, updatedBy, onShare, shareCopied, isAdmin }) {
+export default function StatusBar({ connected, updatedAt, updatedBy, onShare, shareCopied, isAdmin, isRealAdmin, onToggleAdminView }) {
   const seconds = useSecondsSince(updatedAt)
   const age = formatAge(seconds)
 
@@ -38,10 +38,11 @@ export default function StatusBar({ connected, updatedAt, updatedBy, onShare, sh
         {updatedMsg && <span className="last-updated">{updatedMsg}</span>}
       </div>
       <div className="status-actions">
-        {isAdmin && (
-          <button className="btn btn-admin-logout" onClick={() => { localStorage.removeItem('admin_unlocked'); window.location.reload() }}>
-            Admin Log Out
-          </button>
+        {isRealAdmin && (
+          <div className="admin-view-toggle" onClick={onToggleAdminView}>
+            <span className={`toggle-seg${isAdmin ? ' toggle-seg-active' : ''}`}>Admin</span>
+            <span className={`toggle-seg${!isAdmin ? ' toggle-seg-active' : ''}`}>User</span>
+          </div>
         )}
         <button className="btn btn-refresh" onClick={() => window.location.reload()}>↻ Refresh</button>
         <button className="btn-share" onClick={onShare} title="Share app">

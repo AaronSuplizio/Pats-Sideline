@@ -862,21 +862,29 @@ body {
   50%       { opacity: 0.65; }
 }
 
-/* Admin log out */
-.btn-admin-logout {
-  background: transparent;
-  color: var(--fg-muted);
-  font-size: 0.68rem;
-  padding: 3px 8px;
+/* Admin / User view toggle */
+.admin-view-toggle {
+  display: flex;
   border: 1px solid var(--border);
   border-radius: 6px;
-  font-family: var(--font-ui);
-  font-weight: 500;
+  overflow: hidden;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0.7;
+  flex-shrink: 0;
 }
-.btn-admin-logout:hover { opacity: 1; color: var(--red); border-color: var(--red); }
+.toggle-seg {
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 3px 8px;
+  color: var(--fg-muted);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+.toggle-seg-active {
+  background: var(--accent);
+  color: var(--bg);
+}
 
 /* Refresh button */
 .btn-refresh {

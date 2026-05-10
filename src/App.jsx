@@ -23,6 +23,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [dbError, setDbError] = useState(null)
   const [chatName, setChatName] = useState(() => localStorage.getItem('chat_name'))
+  const [isRealAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
   const [shareCopied, setShareCopied] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'light')
@@ -266,6 +267,8 @@ export default function App() {
           onShare={shareApp}
           shareCopied={shareCopied}
           isAdmin={isAdmin}
+          isRealAdmin={isRealAdmin}
+          onToggleAdminView={() => setIsAdmin(a => !a)}
         />
       </header>
 
