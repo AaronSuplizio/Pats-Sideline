@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 
 const MOMENTS = [
-  { id: 'goal',     label: 'Goal!!',               emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
+  { id: 'goal',     label: 'Pats Goal!!!!',         emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
   { id: 'gopats',   label: 'Gooooo Pats!',          emoji: '⭐', color: '#F5C200', vibrate: [100, 50, 100, 50, 100, 50, 300], ripple: true },
-  { id: 'corner',   label: 'Corner Kick',           emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
+  { id: 'corner',   label: 'Pats Corner',           emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
+  { id: 'oppcorner',label: 'Opponent Corner',       emoji: '🚩', color: '#888888', vibrate: [80, 40, 80] },
   { id: 'fast',     label: 'Sooooo fast!',          emoji: '💨', color: '#69c0ff', vibrate: [80, 30, 200, 30, 80] },
   { id: 'footwork', label: 'Check the footwork!',   emoji: '👟', color: '#FF6B35', vibrate: [80, 30, 80, 30, 80] },
   { id: 'pass',     label: 'What a pass!',          emoji: '🎯', color: '#a855f7', vibrate: [150, 60, 200] },
