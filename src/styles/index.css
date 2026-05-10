@@ -642,6 +642,29 @@ body {
   flex: 1;
 }
 
+.btn-playstopped {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 8px;
+  background: rgba(255, 165, 0, 0.12);
+  color: #ffa500;
+  border: 2px solid #ffa500;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.btn-playstopped-active {
+  background: #ffa500;
+  color: #000;
+}
+
 .btn-waterbreak {
   display: flex;
   align-items: center;
@@ -688,7 +711,30 @@ body {
   color: var(--bg);
 }
 
-/* Halftime overlay */
+.btn-gameover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px;
+  background: rgba(255, 215, 0, 0.1);
+  color: #c8a800;
+  border: 2px solid #c8a800;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+.btn-gameover-active {
+  background: #c8a800;
+  color: #000;
+}
+
+/* Status badges */
 .halftime-badge {
   background: #FF1493;
   color: #fff;
@@ -708,6 +754,25 @@ body {
   padding: 3px 8px;
   border-radius: 4px;
   animation: halftimePulse 2s ease infinite;
+}
+.playstopped-badge {
+  background: #ffa500;
+  color: #000;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  animation: halftimePulse 1.5s ease infinite;
+}
+.gameover-badge {
+  background: #c8a800;
+  color: #000;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  padding: 3px 8px;
+  border-radius: 4px;
 }
 @keyframes halftimePulse {
   0%, 100% { opacity: 1; }

@@ -26,7 +26,7 @@ function AnimatedScore({ value, extraClass, onClick }) {
 
 const HALF_LABELS = ['1st', '2nd']
 
-export default function Scoreboard({ patsScore, opponentScore, half, onSetScore, halftimeActive, waterBreakActive }) {
+export default function Scoreboard({ patsScore, opponentScore, half, onSetScore, halftimeActive, waterBreakActive, playStoppedActive, gameOver }) {
   const [editing, setEditing] = useState(null) // 'pats' | 'opponent' | null
   const [editValue, setEditValue] = useState('')
   const inputRef = useRef(null)
@@ -64,10 +64,14 @@ export default function Scoreboard({ patsScore, opponentScore, half, onSetScore,
           </div>
 
           <div className="scoreboard-center">
-            {halftimeActive
+            {gameOver
+              ? <div className="half-badge gameover-badge">FINAL</div>
+              : halftimeActive
               ? <div className="half-badge halftime-badge">HALFTIME</div>
               : waterBreakActive
               ? <div className="half-badge waterbreak-badge">WATER BREAK</div>
+              : playStoppedActive
+              ? <div className="half-badge playstopped-badge">PLAY STOPPED</div>
               : <div className="half-badge">{HALF_LABELS[half - 1] ?? '1st'} HALF</div>
             }
             <div className="score-colon">:</div>

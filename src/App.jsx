@@ -32,6 +32,10 @@ export default function App() {
   const halftimeChannelRef = useRef(null)
   const [waterBreakActive, setWaterBreakActive] = useState(false)
   const waterBreakChannelRef = useRef(null)
+  const [playStoppedActive, setPlayStoppedActive] = useState(false)
+  const playStoppedChannelRef = useRef(null)
+  const [gameOver, setGameOver] = useState(false)
+  const gameOverChannelRef = useRef(null)
 
   async function shareApp() {
     const url = window.location.href
@@ -44,10 +48,22 @@ export default function App() {
     }
   }
 
+  function togglePlayStopped() {
+    const next = !playStoppedActive
+    setPlayStoppedActive(next)
+    playStoppedChannelRef.current?.send({ type: 'broadcast', event: 'playstopped', payload: { active: next } })
+  }
+
   function toggleWaterBreak() {
     const next = !waterBreakActive
     setWaterBreakActive(next)
     waterBreakChannelRef.current?.send({ type: 'broadcast', event: 'waterbreak', payload: { active: next } })
+  }
+
+  function toggleGameOver() {
+    const next = !gameOver
+    setGameOver(next)
+    gameOverChannelRef.current?.send({ type: 'broadcast', event: 'gameover', payload: { active: next } })
   }
 
   function toggleHalftime() {
@@ -208,6 +224,28 @@ export default function App() {
     return () => { supabase.removeChannel(waterBreakChannelRef.current) }
   }, [])
 
+  useEffect(() => {
+    playStoppedChannelRef.current = supabase
+      .channel('game_playstopped')
+      .on('broadcast', { event: 'playstopped' }, ({ payload }) => {
+        setPlayStoppedActive(payload.active)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(playStoppedChannelRef.current) }
+  }, [])
+
+  useEffect(() => {
+    gameOverChannelRef.current = supabase
+      .channel('game_over')
+      .on('broadcast', { event: 'gameover' }, ({ payload }) => {
+        setGameOver(payload.active)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(gameOverChannelRef.current) }
+  }, [])
+
   if (loading) {
     return (
       <div className="loading-screen">
@@ -278,6 +316,8 @@ export default function App() {
             half={game.half}
             halftimeActive={halftimeActive}
             waterBreakActive={waterBreakActive}
+            playStoppedActive={playStoppedActive}
+            gameOver={gameOver}
             onSetScore={(team, value) => {
               const key = team === 'pats' ? 'pats_score' : 'opponent_score'
               const patch = { pats_score: game.pats_score, opponent_score: game.opponent_score, half: game.half, [key]: value }
@@ -291,6 +331,7 @@ export default function App() {
             timerEndAt={game.timer_end_at}
             timerRemainingMs={game.timer_remaining_ms}
             waterBreakActive={waterBreakActive}
+            gameOver={gameOver}
             onTimerPatch={(patch) => {
               setGame(prev => ({ ...prev, ...patch }))
               persist(patch).then(err => { if (err) setDbError(`Timer save failed: ${err.message}`) })
@@ -316,20 +357,34 @@ export default function App() {
             </div>
 
             {isAdmin && (
-              <div className="game-state-btns">
+              <>
+                <div className="game-state-btns">
+                  <button
+                    className={`btn-playstopped${playStoppedActive ? ' btn-playstopped-active' : ''}`}
+                    onClick={togglePlayStopped}
+                  >
+                    {playStoppedActive ? 'PLAY RESUMED' : 'PLAY STOPPED'}
+                  </button>
+                  <button
+                    className={`btn-waterbreak${waterBreakActive ? ' btn-waterbreak-active' : ''}`}
+                    onClick={toggleWaterBreak}
+                  >
+                    {waterBreakActive ? 'END WATER BREAK' : 'WATER BREAK'}
+                  </button>
+                  <button
+                    className={`btn-halftime${halftimeActive ? ' btn-halftime-active' : ''}`}
+                    onClick={toggleHalftime}
+                  >
+                    {halftimeActive ? 'END HALFTIME' : 'HALFTIME'}
+                  </button>
+                </div>
                 <button
-                  className={`btn-waterbreak${waterBreakActive ? ' btn-waterbreak-active' : ''}`}
-                  onClick={toggleWaterBreak}
+                  className={`btn-gameover${gameOver ? ' btn-gameover-active' : ''}`}
+                  onClick={toggleGameOver}
                 >
-                  {waterBreakActive ? 'END WATER BREAK' : 'WATER BREAK'}
+                  {gameOver ? 'CLEAR FINAL' : 'FINAL SCORE'}
                 </button>
-                <button
-                  className={`btn-halftime${halftimeActive ? ' btn-halftime-active' : ''}`}
-                  onClick={toggleHalftime}
-                >
-                  {halftimeActive ? 'END HALFTIME' : 'HALFTIME'}
-                </button>
-              </div>
+              </>
             )}
 
             {confirmingReset ? (

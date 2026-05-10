@@ -22,7 +22,7 @@ function parseTimeInput(str) {
   return m * 60 * 1000
 }
 
-export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch, waterBreakActive }) {
+export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch, waterBreakActive, gameOver }) {
   const [isRunning, setIsRunning] = useState(false)
   const [displayMs, setDisplayMs] = useState(DEFAULT_MS)
   const [editing, setEditing] = useState(false)
@@ -49,6 +49,18 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     broadcast({ action: 'pause', remainingMs: left })
     onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
   }, [waterBreakActive])
+
+  // Stop timer when game is marked final (admin only)
+  useEffect(() => {
+    if (!gameOver || !isAdmin) return
+    if (!isRunningRef.current) return
+    const left = Math.max(0, displayMsRef.current)
+    clearInterval(tickRef.current)
+    setIsRunning(false)
+    setDisplayMs(left)
+    broadcast({ action: 'pause', remainingMs: left })
+    onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
+  }, [gameOver])
 
   function startTick(endAt) {
     clearInterval(tickRef.current)
@@ -156,7 +168,7 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
       <div className="timer-section">
         <div className="timer-label">UNOFFICIAL TIME</div>
         <div
-          className={`timer-display${isZero ? ' timer-zero' : isRunning ? ' timer-running' : ''}${isAdmin ? ' timer-tappable' : ''}`}
+          className={`timer-display${isZero && !gameOver ? ' timer-zero' : isRunning ? ' timer-running' : ''}${isAdmin ? ' timer-tappable' : ''}`}
           onClick={openEdit}
           title={isAdmin ? 'Tap to edit' : undefined}
         >
