@@ -187,6 +187,11 @@ body {
   font-size: 0.78rem;
   color: var(--fg-muted);
 }
+.status-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 .connection-dot {
   width: 7px;
   height: 7px;
@@ -876,11 +881,14 @@ body {
   border: 1px solid var(--border);
   color: var(--fg-muted);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 4px 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
+  font-family: var(--font-ui);
+  font-size: 0.73rem;
+  font-weight: 500;
   flex-shrink: 0;
   transition: color 0.15s, border-color 0.15s;
   -webkit-tap-highlight-color: transparent;

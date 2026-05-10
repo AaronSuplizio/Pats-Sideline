@@ -263,7 +263,6 @@ export default function App() {
           connected={connected}
           updatedAt={game.updated_at}
           updatedBy={game.updated_by}
-          onRefresh={fetchGame}
           onShare={shareApp}
           shareCopied={shareCopied}
         />
