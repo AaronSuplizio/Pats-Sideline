@@ -40,16 +40,14 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
   }, [waterBreakActive])
 
-  // Stop timer when game is marked final (admin only)
+  // Zero out and stop timer when game is marked final (admin only)
   useEffect(() => {
     if (!gameOver || !isAdmin) return
-    if (!isRunningRef.current) return
-    const left = Math.max(0, displayMsRef.current)
     clearInterval(tickRef.current)
     setIsRunning(false)
-    setDisplayMs(left)
-    broadcast({ action: 'pause', remainingMs: left })
-    onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
+    setDisplayMs(0)
+    broadcast({ action: 'pause', remainingMs: 0 })
+    onTimerPatch({ timer_end_at: null, timer_remaining_ms: 0 })
   }, [gameOver])
 
   function startTick(endAt) {
