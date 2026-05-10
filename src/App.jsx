@@ -265,6 +265,7 @@ export default function App() {
           updatedBy={game.updated_by}
           onShare={shareApp}
           shareCopied={shareCopied}
+          isAdmin={isAdmin}
         />
       </header>
 
