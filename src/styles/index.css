@@ -1308,7 +1308,7 @@ body {
   background: var(--dim);
   border-radius: 12px 12px 12px 3px;
   padding: 8px 12px;
-  font-size: 0.88rem;
+  font-size: 1em;
   line-height: 1.4;
   word-break: break-word;
   color: var(--fg);
