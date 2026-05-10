@@ -1147,7 +1147,9 @@ body {
 .chat {
   display: flex;
   flex-direction: column;
-  height: 420px;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
 }
 .chat-header {
   display: flex;
