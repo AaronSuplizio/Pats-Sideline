@@ -7,14 +7,12 @@ export default function HalfControls({ half, onSetHalf, isAdmin, halftimeActive,
       >
         1st
       </button>
-      {isAdmin && (
-        <button
-          className={`btn btn-halftime-inline${halftimeActive ? ' btn-halftime-inline-active' : ''}`}
-          onClick={onToggleHalftime}
-        >
-          {halftimeActive ? 'END HT' : 'HALFTIME'}
-        </button>
-      )}
+      <button
+        className={`btn btn-halftime-inline${halftimeActive ? ' btn-halftime-inline-active' : ''}`}
+        onClick={onToggleHalftime}
+      >
+        {halftimeActive ? 'END HT' : 'HALFTIME'}
+      </button>
       <button
         className={`btn btn-half ${half === 2 ? 'btn-half-active' : ''}`}
         onClick={() => onSetHalf(2)}
