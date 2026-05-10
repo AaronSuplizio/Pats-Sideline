@@ -22,7 +22,6 @@ export default function App() {
   const [connected, setConnected] = useState(false)
   const [loading, setLoading] = useState(true)
   const [dbError, setDbError] = useState(null)
-  const [confirmingReset, setConfirmingReset] = useState(false)
   const [chatName, setChatName] = useState(() => localStorage.getItem('chat_name'))
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
   const [shareCopied, setShareCopied] = useState(false)
@@ -168,14 +167,6 @@ export default function App() {
       if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() }
     })
   }, [game, chatName, fetchGame, persistAs])
-
-  const resetGame = useCallback(async () => {
-    const patch = { pats_score: 0, opponent_score: 0, half: game.half }
-    setConfirmingReset(false)
-    setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
-    const error = await persistAs(patch)
-    if (error) { setDbError(`Reset failed: ${error.message}`); fetchGame() }
-  }, [game.half, chatName, fetchGame, persistAs])
 
   useEffect(() => {
     fetchGame()
@@ -353,7 +344,13 @@ export default function App() {
 
             <div className="half-card">
               <div className="half-card-label">HALF</div>
-              <HalfControls half={game.half} onSetHalf={setHalf} />
+              <HalfControls
+                half={game.half}
+                onSetHalf={setHalf}
+                isAdmin={isAdmin}
+                halftimeActive={halftimeActive}
+                onToggleHalftime={toggleHalftime}
+              />
             </div>
 
             {isAdmin && (
@@ -363,19 +360,13 @@ export default function App() {
                     className={`btn-playstopped${playStoppedActive ? ' btn-playstopped-active' : ''}`}
                     onClick={togglePlayStopped}
                   >
-                    {playStoppedActive ? 'PLAY RESUMED' : 'PLAY STOPPED'}
+                    {playStoppedActive ? 'RESUMED' : 'STOPPED: INJURY'}
                   </button>
                   <button
                     className={`btn-waterbreak${waterBreakActive ? ' btn-waterbreak-active' : ''}`}
                     onClick={toggleWaterBreak}
                   >
-                    {waterBreakActive ? 'END WATER BREAK' : 'WATER BREAK'}
-                  </button>
-                  <button
-                    className={`btn-halftime${halftimeActive ? ' btn-halftime-active' : ''}`}
-                    onClick={toggleHalftime}
-                  >
-                    {halftimeActive ? 'END HALFTIME' : 'HALFTIME'}
+                    {waterBreakActive ? 'RESUMED' : 'STOPPED: WATER'}
                   </button>
                 </div>
                 <button
@@ -385,18 +376,6 @@ export default function App() {
                   {gameOver ? 'CLEAR FINAL' : 'FINAL SCORE'}
                 </button>
               </>
-            )}
-
-            {confirmingReset ? (
-              <div className="reset-confirm">
-                <span className="reset-confirm-label">Zero out scores?</span>
-                <button className="btn btn-reset-confirm" onClick={resetGame}>Yes, reset</button>
-                <button className="btn btn-reset-cancel" onClick={() => setConfirmingReset(false)}>Cancel</button>
-              </div>
-            ) : (
-              <button className="btn btn-reset" onClick={() => setConfirmingReset(true)}>
-                Reset Score
-              </button>
             )}
 
           </section>

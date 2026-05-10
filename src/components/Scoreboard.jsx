@@ -71,7 +71,7 @@ export default function Scoreboard({ patsScore, opponentScore, half, onSetScore,
               : waterBreakActive
               ? <div className="half-badge waterbreak-badge">WATER BREAK</div>
               : playStoppedActive
-              ? <div className="half-badge playstopped-badge">PLAY STOPPED</div>
+              ? <div className="half-badge playstopped-badge">INJURY STOP</div>
               : <div className="half-badge">{HALF_LABELS[half - 1] ?? '1st'} HALF</div>
             }
             <div className="score-colon">:</div>
