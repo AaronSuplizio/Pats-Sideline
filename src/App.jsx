@@ -447,7 +447,7 @@ export default function App() {
                     {game.game_over ? 'CLEAR FINAL' : 'FINAL SCORE'}
                   </button>
                   <button className="btn-theme-toggle" onClick={toggleTheme}>
-                    {theme === 'dark' ? 'LIGHT' : 'DARK'}
+                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </button>
                 </div>
               </div>

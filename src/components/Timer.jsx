@@ -238,10 +238,11 @@ export default function Timer({ isAdmin, timerEndAt, timerElapsedMs, halfDuratio
             <button
               className={`btn-timer-toggle ${isRunning ? 'btn-timer-pause' : 'btn-timer-start'}`}
               onClick={isRunning ? handlePause : handleStart}
+              disabled={gameOver}
             >
               {isRunning ? 'PAUSE' : elapsedSeconds === 0 ? 'START' : 'RESTART'}
             </button>
-            <button className="btn-timer-reset" onClick={handleReset}>
+            <button className="btn-timer-reset" onClick={handleReset} disabled={gameOver}>
               RESET
             </button>
           </div>
