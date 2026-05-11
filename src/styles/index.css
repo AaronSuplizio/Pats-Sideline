@@ -1604,7 +1604,7 @@ body {
 }
 .chat-title {
   font-family: var(--font-display);
-  font-size: 0.82rem;
+  font-size: 0.82em;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -1614,7 +1614,7 @@ body {
   background: none;
   border: none;
   color: var(--fg-muted);
-  font-size: 0.72rem;
+  font-size: 0.72em;
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
@@ -1637,7 +1637,7 @@ body {
   border-radius: 5px;
   color: var(--fg-muted);
   font-family: var(--font-ui);
-  font-size: 0.72rem;
+  font-size: 0.72em;
   font-weight: 600;
   padding: 2px 7px;
   cursor: pointer;
@@ -1669,7 +1669,7 @@ body {
   margin-bottom: 4px;
 }
 .btn-clear-chat {
-  font-size: 0.68rem;
+  font-size: 0.68em;
   padding: 3px 8px;
   background: rgba(255,68,68,0.12);
   color: var(--red);

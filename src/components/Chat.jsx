@@ -142,7 +142,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
   }
 
   return (
-    <div className="chat">
+    <div className="chat" style={{ fontSize: FONT_SIZES[fontIdx] + 'px' }}>
       <div className="chat-header">
         <span className="chat-title">Parent Chat</span>
         <div className="chat-header-right">
@@ -169,7 +169,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
         </div>
       </div>
 
-      <div className="chat-messages" style={{ fontSize: FONT_SIZES[fontIdx] + 'px' }}>
+      <div className="chat-messages">
         {messages.length === 0 && (
           <p className="chat-empty">No messages yet — say something! 👋</p>
         )}
