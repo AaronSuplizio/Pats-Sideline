@@ -21,7 +21,6 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
   const tickRef = useRef(null)
   const channelRef = useRef(null)
   const minutesRef = useRef(null)
-  const syncedRef = useRef(false)
   const displayMsRef = useRef(DEFAULT_MS)
   const isRunningRef = useRef(false)
 
@@ -72,11 +71,8 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     setDisplayMs(ms)
   }
 
-  // Sync initial state from DB (runs once when DB data arrives via props)
+  // Sync from DB whenever props change — handles initial load, reconnects, and missed broadcasts
   useEffect(() => {
-    if (syncedRef.current) return
-    if (timerEndAt === undefined && timerRemainingMs === undefined) return
-    syncedRef.current = true
     const endAt = timerEndAt ? Number(timerEndAt) : null
     if (endAt && endAt > Date.now()) {
       startTick(endAt)
