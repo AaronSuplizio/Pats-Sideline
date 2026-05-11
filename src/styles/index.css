@@ -420,6 +420,17 @@ body {
   text-transform: uppercase;
   color: var(--fg-muted);
 }
+.timer-remaining {
+  font-family: var(--font-display);
+  font-size: clamp(0.9rem, 3.5vw, 1.15rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--fg-muted);
+  margin-top: -2px;
+}
+.timer-stoppage {
+  color: var(--accent);
+}
 .timer-display {
   font-family: var(--font-display);
   font-size: clamp(3rem, 14vw, 5.5rem);
@@ -482,6 +493,23 @@ body {
   transition: color 0.12s, border-color 0.12s;
 }
 .btn-timer-reset:hover { color: var(--fg); border-color: var(--fg-muted); }
+.btn-half-duration {
+  background: transparent;
+  color: var(--fg-muted);
+  border: none;
+  font-family: var(--font-display);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: -2px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s;
+}
+.btn-half-duration:hover { color: var(--fg); }
 
 /* ── Controls section ────────────────────────────────────────────── */
 .controls-section {

@@ -1,28 +1,35 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabaseClient'
 
-const DEFAULT_MS = 35 * 60 * 1000
+function formatElapsed(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
 
-function formatTime(ms) {
+function formatRemaining(ms) {
   const totalSeconds = Math.max(0, Math.ceil(ms / 1000))
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
 }
 
-
-export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPatch, waterBreakActive, gameOver }) {
+export default function Timer({ isAdmin, timerStartAt, timerElapsedMs, halfDurationMs, onTimerPatch, waterBreakActive, gameOver }) {
   const [isRunning, setIsRunning] = useState(false)
-  const [displayMs, setDisplayMs] = useState(DEFAULT_MS)
+  const [displayMs, setDisplayMs] = useState(0)
   const [editing, setEditing] = useState(false)
   const [editMinutes, setEditMinutes] = useState('')
   const [editSeconds, setEditSeconds] = useState('')
   const [editError, setEditError] = useState(false)
+  const [durationEditing, setDurationEditing] = useState(false)
+  const [editDurationMinutes, setEditDurationMinutes] = useState('')
+  const [editDurationError, setEditDurationError] = useState(false)
   const tickRef = useRef(null)
   const channelRef = useRef(null)
   const minutesRef = useRef(null)
-  const syncedRef = useRef(false)
-  const displayMsRef = useRef(DEFAULT_MS)
+  const durationMinutesRef = useRef(null)
+  const displayMsRef = useRef(0)
   const isRunningRef = useRef(false)
 
   useEffect(() => { displayMsRef.current = displayMs }, [displayMs])
@@ -32,58 +39,50 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
   useEffect(() => {
     if (!waterBreakActive || !isAdmin) return
     if (!isRunningRef.current) return
-    const left = Math.max(0, displayMsRef.current)
+    const elapsed = displayMsRef.current
     clearInterval(tickRef.current)
     setIsRunning(false)
-    setDisplayMs(left)
-    broadcast({ action: 'pause', remainingMs: left })
-    onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
+    setDisplayMs(elapsed)
+    broadcast({ action: 'pause', elapsedMs: elapsed })
+    onTimerPatch({ timer_start_at: null, timer_elapsed_ms: elapsed })
   }, [waterBreakActive])
 
-  // Zero out and stop timer when game is marked final (admin only)
+  // Stop timer when game is marked final (admin only) — preserve elapsed time
   useEffect(() => {
     if (!gameOver || !isAdmin) return
+    if (!isRunningRef.current) return
+    const elapsed = displayMsRef.current
     clearInterval(tickRef.current)
     setIsRunning(false)
-    setDisplayMs(0)
-    broadcast({ action: 'pause', remainingMs: 0 })
-    onTimerPatch({ timer_end_at: null, timer_remaining_ms: 0 })
+    setDisplayMs(elapsed)
+    broadcast({ action: 'pause', elapsedMs: elapsed })
+    onTimerPatch({ timer_start_at: null, timer_elapsed_ms: elapsed })
   }, [gameOver])
 
-  function startTick(endAt) {
+  function startTick(virtualStartAt) {
     clearInterval(tickRef.current)
     setIsRunning(true)
-    setDisplayMs(Math.max(0, endAt - Date.now()))
+    setDisplayMs(Date.now() - virtualStartAt)
     tickRef.current = setInterval(() => {
-      const left = endAt - Date.now()
-      if (left <= 0) {
-        clearInterval(tickRef.current)
-        setDisplayMs(0)
-        setIsRunning(false)
-      } else {
-        setDisplayMs(left)
-      }
+      setDisplayMs(Date.now() - virtualStartAt)
     }, 250)
   }
 
-  function applyPause(ms) {
+  function applyPause(elapsedMs) {
     clearInterval(tickRef.current)
     setIsRunning(false)
-    setDisplayMs(ms)
+    setDisplayMs(elapsedMs)
   }
 
-  // Sync initial state from DB (runs once when DB data arrives via props)
+  // Sync from DB whenever props change — handles initial load, reconnects, and missed broadcasts
   useEffect(() => {
-    if (syncedRef.current) return
-    if (timerEndAt === undefined && timerRemainingMs === undefined) return
-    syncedRef.current = true
-    const endAt = timerEndAt ? Number(timerEndAt) : null
-    if (endAt && endAt > Date.now()) {
-      startTick(endAt)
+    const virtualStart = timerStartAt ? Number(timerStartAt) : null
+    if (virtualStart) {
+      startTick(virtualStart)
     } else {
-      applyPause(timerRemainingMs ?? DEFAULT_MS)
+      applyPause(timerElapsedMs ?? 0)
     }
-  }, [timerEndAt, timerRemainingMs])
+  }, [timerStartAt, timerElapsedMs])
 
   // Broadcast channel for real-time sync between connected users
   useEffect(() => {
@@ -91,11 +90,11 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
       .channel('game_timer')
       .on('broadcast', { event: 'timer' }, ({ payload }) => {
         if (payload.action === 'start') {
-          startTick(Number(payload.endAt))
+          startTick(Number(payload.startAt))
         } else if (payload.action === 'pause') {
-          applyPause(payload.remainingMs)
+          applyPause(payload.elapsedMs)
         } else if (payload.action === 'reset') {
-          applyPause(DEFAULT_MS)
+          applyPause(0)
         }
       })
       .subscribe()
@@ -107,29 +106,29 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
   }
 
   function handleStart() {
-    const endAt = Date.now() + displayMs
-    startTick(endAt)
-    broadcast({ action: 'start', endAt })
-    onTimerPatch({ timer_end_at: endAt, timer_remaining_ms: displayMs })
+    const virtualStartAt = Date.now() - displayMs
+    startTick(virtualStartAt)
+    broadcast({ action: 'start', startAt: virtualStartAt })
+    onTimerPatch({ timer_start_at: virtualStartAt, timer_elapsed_ms: displayMs })
   }
 
   function handlePause() {
-    const left = Math.max(0, displayMs)
-    applyPause(left)
-    broadcast({ action: 'pause', remainingMs: left })
-    onTimerPatch({ timer_end_at: null, timer_remaining_ms: left })
+    const elapsed = displayMsRef.current
+    applyPause(elapsed)
+    broadcast({ action: 'pause', elapsedMs: elapsed })
+    onTimerPatch({ timer_start_at: null, timer_elapsed_ms: elapsed })
   }
 
   function handleReset() {
-    applyPause(DEFAULT_MS)
+    applyPause(0)
     broadcast({ action: 'reset' })
-    onTimerPatch({ timer_end_at: null, timer_remaining_ms: DEFAULT_MS })
+    onTimerPatch({ timer_start_at: null, timer_elapsed_ms: 0 })
   }
 
   function openEdit() {
     if (!isAdmin) return
     if (isRunning) handlePause()
-    const totalSeconds = Math.max(0, Math.ceil(displayMsRef.current / 1000))
+    const totalSeconds = Math.floor(displayMsRef.current / 1000)
     setEditMinutes(String(Math.floor(totalSeconds / 60)))
     setEditSeconds(String(totalSeconds % 60))
     setEditError(false)
@@ -144,8 +143,23 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     const ms = (m * 60 + s) * 1000
     setEditing(false)
     applyPause(ms)
-    broadcast({ action: 'pause', remainingMs: ms })
-    onTimerPatch({ timer_end_at: null, timer_remaining_ms: ms })
+    broadcast({ action: 'pause', elapsedMs: ms })
+    onTimerPatch({ timer_start_at: null, timer_elapsed_ms: ms })
+  }
+
+  function openDurationEdit() {
+    if (!isAdmin) return
+    setEditDurationMinutes(String(Math.round((halfDurationMs ?? 35 * 60 * 1000) / 60000)))
+    setEditDurationError(false)
+    setDurationEditing(true)
+    setTimeout(() => { durationMinutesRef.current?.focus(); durationMinutesRef.current?.select() }, 50)
+  }
+
+  function confirmDurationEdit() {
+    const m = parseInt(editDurationMinutes, 10)
+    if (isNaN(m) || m < 1 || m > 99) { setEditDurationError(true); return }
+    setDurationEditing(false)
+    onTimerPatch({ half_duration_ms: m * 60000 })
   }
 
   function handleMinutesKey(e) {
@@ -158,25 +172,38 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
     if (e.key === 'Escape') setEditing(false)
   }
 
-  const isZero = displayMs === 0
+  function handleDurationKey(e) {
+    if (e.key === 'Enter') confirmDurationEdit()
+    if (e.key === 'Escape') setDurationEditing(false)
+  }
+
+  const effectiveHalfDuration = halfDurationMs ?? 35 * 60 * 1000
+  const remainingMs = effectiveHalfDuration - displayMs
+  const inStoppage = remainingMs < 0
 
   return (
     <>
       <div className="timer-section">
-        <div className="timer-label">UNOFFICIAL TIME</div>
+        <div className="timer-label">GAME TIME</div>
         <div
-          className={`timer-display${isZero && !gameOver ? ' timer-zero' : isRunning ? ' timer-running' : ''}${isAdmin ? ' timer-tappable' : ''}`}
+          className={`timer-display${isRunning ? ' timer-running' : ''}${isAdmin ? ' timer-tappable' : ''}`}
           onClick={openEdit}
           title={isAdmin ? 'Tap to edit' : undefined}
         >
-          {formatTime(displayMs)}
+          {formatElapsed(displayMs)}
         </div>
+        {!gameOver && (
+          <div className={`timer-remaining${inStoppage ? ' timer-stoppage' : ''}`}>
+            {inStoppage
+              ? `+${formatRemaining(-remainingMs)} STOPPAGE`
+              : `${formatRemaining(remainingMs)} LEFT`}
+          </div>
+        )}
         {isAdmin && (
           <div className="timer-controls">
             <button
               className={`btn-timer-toggle ${isRunning ? 'btn-timer-pause' : 'btn-timer-start'}`}
               onClick={isRunning ? handlePause : handleStart}
-              disabled={isZero && !isRunning}
             >
               {isRunning ? 'PAUSE' : 'START'}
             </button>
@@ -185,12 +212,17 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
             </button>
           </div>
         )}
+        {isAdmin && (
+          <button className="btn-half-duration" onClick={openDurationEdit}>
+            {Math.round(effectiveHalfDuration / 60000)} MIN HALVES
+          </button>
+        )}
       </div>
 
       {editing && (
         <div className="score-edit-overlay" onClick={() => setEditing(false)}>
           <div className="score-edit-card" onClick={e => e.stopPropagation()}>
-            <div className="score-edit-title">Set Time</div>
+            <div className="score-edit-title">Set Game Clock</div>
             <div className="timer-edit-fields">
               <div className="timer-edit-field">
                 <input
@@ -200,13 +232,13 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
                   inputMode="numeric"
                   min="0"
                   max="99"
-                  placeholder="35"
+                  placeholder="0"
                   value={editMinutes}
                   onChange={e => { setEditMinutes(e.target.value); setEditError(false) }}
                   onKeyDown={handleMinutesKey}
                   autoFocus
                 />
-                <div className="timer-edit-label">MIN</div>
+                <div className="timer-edit-label">MIN ELAPSED</div>
               </div>
               <div className="timer-edit-colon">:</div>
               <div className="timer-edit-field">
@@ -221,13 +253,44 @@ export default function Timer({ isAdmin, timerEndAt, timerRemainingMs, onTimerPa
                   onChange={e => { setEditSeconds(e.target.value); setEditError(false) }}
                   onKeyDown={handleSecondsKey}
                 />
-                <div className="timer-edit-label">SEC</div>
+                <div className="timer-edit-label">SEC ELAPSED</div>
               </div>
             </div>
             {editError && <div className="admin-error">Enter valid minutes (0–99) and seconds (0–59)</div>}
             <div className="score-edit-actions">
               <button className="btn score-edit-cancel" onClick={() => setEditing(false)}>Cancel</button>
-              <button className="btn score-edit-confirm" onClick={confirmEdit}>Set Time</button>
+              <button className="btn score-edit-confirm" onClick={confirmEdit}>Set Clock</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {durationEditing && (
+        <div className="score-edit-overlay" onClick={() => setDurationEditing(false)}>
+          <div className="score-edit-card" onClick={e => e.stopPropagation()}>
+            <div className="score-edit-title">Half Duration</div>
+            <div className="timer-edit-fields">
+              <div className="timer-edit-field">
+                <input
+                  ref={durationMinutesRef}
+                  className="score-edit-input timer-edit-input"
+                  type="number"
+                  inputMode="numeric"
+                  min="1"
+                  max="99"
+                  placeholder="35"
+                  value={editDurationMinutes}
+                  onChange={e => { setEditDurationMinutes(e.target.value); setEditDurationError(false) }}
+                  onKeyDown={handleDurationKey}
+                  autoFocus
+                />
+                <div className="timer-edit-label">MINUTES PER HALF</div>
+              </div>
+            </div>
+            {editDurationError && <div className="admin-error">Enter a duration between 1 and 99 minutes</div>}
+            <div className="score-edit-actions">
+              <button className="btn score-edit-cancel" onClick={() => setDurationEditing(false)}>Cancel</button>
+              <button className="btn score-edit-confirm" onClick={confirmDurationEdit}>Set Duration</button>
             </div>
           </div>
         </div>
