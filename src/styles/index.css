@@ -1345,7 +1345,7 @@ body {
 }
 .chat-msg-mine .chat-msg-bubble {
   background: var(--accent);
-  color: var(--bg);
+  color: #ffffff;
   border-radius: 12px 12px 3px 12px;
 }
 
