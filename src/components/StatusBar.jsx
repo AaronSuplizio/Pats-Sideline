@@ -46,7 +46,7 @@ export default function StatusBar({ connected, updatedAt, updatedBy, onShare, sh
             <span className={`toggle-seg${!isAdmin ? ' toggle-seg-active' : ''}`}>User</span>
           </div>
         )}
-        <button className="btn btn-refresh" onClick={() => window.location.reload()}>↻ Refresh</button>
+        <button className="btn btn-refresh" onClick={() => window.location.reload()}>↻ Refresh App</button>
         <button className="btn-share" onClick={onShare} title="Share app">
           {shareCopied ? <span className="share-copied">Copied!</span> : (
             <>
