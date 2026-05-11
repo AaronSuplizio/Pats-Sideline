@@ -75,7 +75,6 @@ export default function Chat({ name, isAdmin, onChangeName }) {
       .limit(100)
       .then(({ data }) => {
         if (data) setMessages(data)
-        setTimeout(scrollToBottom, 50)
       })
 
     const channel = supabase

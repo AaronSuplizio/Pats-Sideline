@@ -4,8 +4,8 @@
   "description": "Real-time soccer scoreboard for Pats games",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1a31a8",
-  "theme_color": "#1a31a8",
+  "background_color": "#000000",
+  "theme_color": "#FF1493",
   "icons": [
     {
       "src": "/icon.svg",

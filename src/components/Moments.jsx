@@ -3,16 +3,19 @@ import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 
 const MOMENTS = [
-  { id: 'goal',     label: 'Pats Goal!!!!',         emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
-  { id: 'gopats',   label: 'Gooooo Pats!',          emoji: '⭐', color: '#F5C200', vibrate: [100, 50, 100, 50, 100, 50, 300], ripple: true },
-  { id: 'corner',   label: 'Pats Corner',           emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
-  { id: 'oppcorner',label: 'Opponent Corner',       emoji: '🏴', color: '#888888', vibrate: [80, 40, 80] },
-  { id: 'fast',     label: 'Sooooo fast!',          emoji: '💨', color: '#69c0ff', vibrate: [80, 30, 200, 30, 80] },
-  { id: 'footwork', label: 'Check the footwork!',   emoji: '👟', color: '#FF6B35', vibrate: [80, 30, 80, 30, 80] },
-  { id: 'pass',     label: 'What a pass!',          emoji: '🎯', color: '#a855f7', vibrate: [150, 60, 200] },
-  { id: 'save',     label: 'What a save!',          emoji: '🧤', color: '#22c55e', vibrate: [200, 50, 200, 50, 400] },
-  { id: 'yellow',   label: 'Yellow Card!',          emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
-  { id: 'pk',       label: 'Penalty Kick',          emoji: '🥅', color: '#FF1493', vibrate: [300, 100, 300] },
+  { id: 'goal',            label: 'Pats Goal!!!!',         emoji: '⚽', color: '#FF1493', vibrate: [150, 50, 150, 50, 150, 50, 400] },
+  { id: 'gopats',          label: 'Gooooo Pats!',          emoji: '⭐', color: '#F5C200', vibrate: [100, 50, 100, 50, 100, 50, 300], ripple: true },
+  { id: 'corner',          label: 'Pats Corner',           emoji: '🚩', color: '#0055A5', vibrate: [80, 40, 80] },
+  { id: 'oppcorner',       label: 'Opponent Corner',       emoji: '🏴', color: '#888888', vibrate: [80, 40, 80] },
+  { id: 'fast',            label: 'Sooooo fast!',          emoji: '💨', color: '#69c0ff', vibrate: [80, 30, 200, 30, 80] },
+  { id: 'footwork',        label: 'Check the footwork!',   emoji: '👟', color: '#FF6B35', vibrate: [80, 30, 80, 30, 80] },
+  { id: 'pass',            label: 'What a pass!',          emoji: '🎯', color: '#a855f7', vibrate: [150, 60, 200] },
+  { id: 'save',            label: 'What a save!',          emoji: '🧤', color: '#22c55e', vibrate: [200, 50, 200, 50, 400] },
+  { id: 'stoppage_injury', label: 'Stoppage: Injury',      emoji: '🚑', color: '#f97316', vibrate: [200, 100, 200, 100, 300] },
+  { id: 'stoppage_water',  label: 'Stoppage: Water Break', emoji: '💧', color: '#0099cc', vibrate: [100, 50, 100] },
+  { id: 'play_resumed',    label: 'Play Resumed!',         emoji: '▶️', color: '#22c55e', vibrate: [80, 30, 80, 30, 200] },
+  { id: 'yellow',          label: 'Yellow Card!',          emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
+  { id: 'pk',              label: 'Penalty Kick',          emoji: '🥅', color: '#FF1493', vibrate: [300, 100, 300] },
 ]
 
 const CONFETTI_COLORS = ['#FF1493', '#000000', '#ffffff', '#0055A5', '#cc007a']
@@ -74,10 +77,15 @@ function launchConfetti() {
   return () => { cancelAnimationFrame(frame); canvas.remove() }
 }
 
-export default function Moments({ name }) {
+export default function Moments({ name, triggerMoment, onSetName }) {
   const [active, setActive] = useState(null)
+  const [namePromptOpen, setNamePromptOpen] = useState(false)
+  const [pendingMoment, setPendingMoment] = useState(null)
+  const [nameInput, setNameInput] = useState('')
+  const [nameError, setNameError] = useState(false)
   const channelRef = useRef(null)
   const timerRef = useRef(null)
+  const nameInputRef = useRef(null)
 
   function showMoment(moment, from = null) {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -88,9 +96,37 @@ export default function Moments({ name }) {
   }
 
   function fireMoment(moment) {
+    if (!name) {
+      setPendingMoment(moment)
+      setNameInput('')
+      setNameError(false)
+      setNamePromptOpen(true)
+      setTimeout(() => nameInputRef.current?.focus(), 50)
+      return
+    }
     showMoment(moment, name)
     channelRef.current?.send({ type: 'broadcast', event: 'moment', payload: { id: moment.id, from: name } })
   }
+
+  function confirmName() {
+    const trimmed = nameInput.trim()
+    if (!trimmed) { setNameError(true); return }
+    onSetName(trimmed)
+    setNamePromptOpen(false)
+    if (pendingMoment) {
+      showMoment(pendingMoment, trimmed)
+      channelRef.current?.send({ type: 'broadcast', event: 'moment', payload: { id: pendingMoment.id, from: trimmed } })
+      setPendingMoment(null)
+    }
+  }
+
+  useEffect(() => {
+    if (!triggerMoment) return
+    const moment = MOMENTS.find(m => m.id === triggerMoment.id)
+    if (!moment) return
+    showMoment(moment, triggerMoment.from)
+    channelRef.current?.send({ type: 'broadcast', event: 'moment', payload: { id: moment.id, from: triggerMoment.from } })
+  }, [triggerMoment])
 
   useEffect(() => {
     channelRef.current = supabase
@@ -122,6 +158,31 @@ export default function Moments({ name }) {
           ))}
         </div>
       </section>
+
+      {namePromptOpen && (
+        <div className="score-edit-overlay" onClick={() => setNamePromptOpen(false)}>
+          <div className="score-edit-card" onClick={e => e.stopPropagation()}>
+            <div className="score-edit-title">Enter Your Name</div>
+            <div className="score-edit-subtitle">Required to send game moments</div>
+            <input
+              ref={nameInputRef}
+              className="score-edit-input"
+              type="text"
+              placeholder="Your name"
+              maxLength={30}
+              value={nameInput}
+              onChange={e => { setNameInput(e.target.value); setNameError(false) }}
+              onKeyDown={e => { if (e.key === 'Enter') confirmName(); if (e.key === 'Escape') setNamePromptOpen(false) }}
+              autoFocus
+            />
+            {nameError && <div className="admin-error">Please enter your name</div>}
+            <div className="score-edit-actions">
+              <button className="btn score-edit-cancel" onClick={() => setNamePromptOpen(false)}>Cancel</button>
+              <button className="btn score-edit-confirm" onClick={confirmName}>Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {active && createPortal(
         <div
