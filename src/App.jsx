@@ -331,11 +331,6 @@ export default function App() {
           <h1 className="app-title" onClick={handleTitleTap} style={{ cursor: 'default', userSelect: 'none' }}>
             Pats Sideline{isAdmin && <span className="admin-badge">ADMIN</span>}
           </h1>
-          {isAdmin && (
-            <button className="btn-theme-toggle" onClick={toggleTheme}>
-              {theme === 'dark' ? 'LIGHT' : 'DARK'}
-            </button>
-          )}
         </div>
         <StatusBar
           connected={connected}
@@ -444,13 +439,17 @@ export default function App() {
             {isAdmin && (
               <div className="admin-box">
                 <div className="admin-box-label">Admin</div>
-
-                <button
-                  className={`btn-gameover${game.game_over ? ' btn-gameover-active' : ''}`}
-                  onClick={toggleGameOver}
-                >
-                  {game.game_over ? 'CLEAR FINAL' : 'FINAL SCORE'}
-                </button>
+                <div className="admin-box-row">
+                  <button
+                    className={`btn-gameover${game.game_over ? ' btn-gameover-active' : ''}`}
+                    onClick={toggleGameOver}
+                  >
+                    {game.game_over ? 'CLEAR FINAL' : 'FINAL SCORE'}
+                  </button>
+                  <button className="btn-theme-toggle" onClick={toggleTheme}>
+                    {theme === 'dark' ? 'LIGHT' : 'DARK'}
+                  </button>
+                </div>
               </div>
             )}
 

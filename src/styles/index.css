@@ -789,6 +789,17 @@ body {
   gap: 8px;
   position: relative;
 }
+.admin-box-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.admin-box-row .btn-theme-toggle {
+  flex-shrink: 0;
+}
+.admin-box-row .btn-gameover {
+  flex: 1;
+}
 .admin-box-label {
   position: absolute;
   top: -9px;
