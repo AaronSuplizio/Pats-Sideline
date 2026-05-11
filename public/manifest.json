@@ -1,6 +1,6 @@
 {
   "name": "Pats Sideline",
-  "short_name": "Pats",
+  "short_name": "Pats Sideline",
   "description": "Real-time soccer scoreboard for Pats games",
   "start_url": "/",
   "display": "standalone",
