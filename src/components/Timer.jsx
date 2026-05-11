@@ -33,7 +33,7 @@ export default function Timer({ isAdmin, timerEndAt, timerElapsedMs, halfDuratio
   const minutesRef = useRef(null)
   const timeLeftMinutesRef = useRef(null)
   const durationRef = useRef(null)
-  const syncedRef = useRef(false)
+  const lastDbSyncRef = useRef({ endAt: null, elapsedMs: null })
   const elapsedMsRef = useRef(0)
   const isRunningRef = useRef(false)
 
@@ -81,15 +81,19 @@ export default function Timer({ isAdmin, timerEndAt, timerElapsedMs, halfDuratio
     setElapsedMs(Math.max(0, elapsed))
   }
 
-  // Sync initial state from DB (once)
+  // Sync from DB whenever timer_end_at or timer_elapsed_ms changes.
+  // De-duped so broadcast updates (which already called startTick/applyPause)
+  // don't trigger a redundant restart when the matching DB write arrives.
   useEffect(() => {
-    if (syncedRef.current) return
     if (timerEndAt === undefined && timerElapsedMs === undefined) return
-    syncedRef.current = true
-    if (timerEndAt) {
-      startTick(Number(timerEndAt))
+    const endAt = timerEndAt ? Number(timerEndAt) : null
+    const elapsed = timerElapsedMs ?? 0
+    if (endAt === lastDbSyncRef.current.endAt && elapsed === lastDbSyncRef.current.elapsedMs) return
+    lastDbSyncRef.current = { endAt, elapsedMs: elapsed }
+    if (endAt) {
+      startTick(endAt)
     } else {
-      applyPause(timerElapsedMs ?? 0)
+      applyPause(elapsed)
     }
   }, [timerEndAt, timerElapsedMs])
 
