@@ -235,6 +235,9 @@ export default function App() {
     persistAs(patch).then(err => {
       if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() }
     })
+    if (team === 'pats' && delta > 0) {
+      setPkMomentTrigger({ id: 'goal', from: chatName, key: Date.now() })
+    }
   }, [game, chatName, fetchGame, persistAs])
 
   const setHalf = useCallback((h) => {
