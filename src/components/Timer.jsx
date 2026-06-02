@@ -36,9 +36,19 @@ export default function Timer({ isAdmin, timerEndAt, timerElapsedMs, halfDuratio
   const lastDbSyncRef = useRef({ endAt: null, elapsedMs: null })
   const elapsedMsRef = useRef(0)
   const isRunningRef = useRef(false)
+  const clockOffsetRef = useRef(0)
 
   useEffect(() => { elapsedMsRef.current = elapsedMs }, [elapsedMs])
   useEffect(() => { isRunningRef.current = isRunning }, [isRunning])
+
+  useEffect(() => {
+    const t0 = Date.now()
+    supabase.rpc('get_server_time').then(({ data }) => {
+      if (data) clockOffsetRef.current = data - Math.round((t0 + Date.now()) / 2)
+    })
+  }, [])
+
+  function serverNow() { return Date.now() + clockOffsetRef.current }
 
   const halfDurMs = halfDurationMs ?? DEFAULT_HALF_MS
 
@@ -69,9 +79,9 @@ export default function Timer({ isAdmin, timerEndAt, timerElapsedMs, halfDuratio
   function startTick(anchor) {
     clearInterval(tickRef.current)
     setIsRunning(true)
-    setElapsedMs(Date.now() - anchor)
+    setElapsedMs(serverNow() - anchor)
     tickRef.current = setInterval(() => {
-      setElapsedMs(Date.now() - anchor)
+      setElapsedMs(serverNow() - anchor)
     }, 250)
   }
 
@@ -119,7 +129,7 @@ export default function Timer({ isAdmin, timerEndAt, timerElapsedMs, halfDuratio
   }
 
   function handleStart() {
-    const anchor = Date.now() - elapsedMs
+    const anchor = serverNow() - elapsedMs
     startTick(anchor)
     broadcast({ action: 'start', anchor })
     onTimerPatch({ timer_end_at: anchor, timer_elapsed_ms: elapsedMs })
