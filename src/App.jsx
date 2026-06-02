@@ -49,8 +49,10 @@ export default function App() {
   })
   const chatHeightRef = useRef(640)
   const [chatName, setChatName] = useState(() => localStorage.getItem('chat_name'))
-  const [isRealAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
-  const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem('admin_unlocked') === '1')
+  const [session, setSession] = useState(null)
+  const [isAdminView, setIsAdminView] = useState(true)
+  const isRealAdmin = !!session
+  const isAdmin = isRealAdmin && isAdminView
   const [shareCopied, setShareCopied] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'light')
   const [pkMomentTrigger, setPkMomentTrigger] = useState(null)
@@ -77,6 +79,14 @@ export default function App() {
   }, [loading])
 
   useEffect(() => { chatHeightRef.current = chatHeight }, [chatHeight])
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   function handleResizeTouchStart(e) {
     const startY = e.touches[0].clientY
@@ -167,7 +177,8 @@ export default function App() {
   }
 
   const [showAdminPrompt, setShowAdminPrompt] = useState(false)
-  const [adminInput, setAdminInput] = useState('')
+  const [adminEmail, setAdminEmail] = useState('')
+  const [adminPassword, setAdminPassword] = useState('')
   const [adminError, setAdminError] = useState(false)
   const tapCountRef = useRef(0)
   const tapTimerRef = useRef(null)
@@ -183,23 +194,28 @@ export default function App() {
     }
   }
 
-  function submitAdminKey(e) {
+  async function submitAdminKey(e) {
     e?.preventDefault()
-    if (adminInput === import.meta.env.VITE_ADMIN_KEY) {
-      localStorage.setItem('admin_unlocked', '1')
-      setIsAdmin(true)
-      setShowAdminPrompt(false)
-      setAdminInput('')
-      setAdminError(false)
-    } else {
+    const { error } = await supabase.auth.signInWithPassword({ email: adminEmail, password: adminPassword })
+    if (error) {
       setAdminError(true)
+    } else {
+      setShowAdminPrompt(false)
+      setAdminEmail('')
+      setAdminPassword('')
+      setAdminError(false)
     }
   }
 
   function closeAdminPrompt() {
     setShowAdminPrompt(false)
-    setAdminInput('')
+    setAdminEmail('')
+    setAdminPassword('')
     setAdminError(false)
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut()
   }
 
   const fetchGame = useCallback(async () => {
@@ -343,7 +359,7 @@ export default function App() {
           shareCopied={shareCopied}
           isAdmin={isAdmin}
           isRealAdmin={isRealAdmin}
-          onToggleAdminView={() => setIsAdmin(a => !a)}
+          onToggleAdminView={() => setIsAdminView(a => !a)}
           gameOver={game.game_over}
         />
       </header>
@@ -357,22 +373,30 @@ export default function App() {
       {showAdminPrompt && (
         <div className="score-edit-overlay" onClick={closeAdminPrompt}>
           <div className="score-edit-card" onClick={e => e.stopPropagation()}>
-            <div className="score-edit-title">Admin Access</div>
-            <form onSubmit={submitAdminKey}>
+            <div className="score-edit-title">Admin Sign In</div>
+            <form onSubmit={submitAdminKey} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <input
                 className="score-edit-input"
-                type="password"
-                placeholder="Passphrase"
-                value={adminInput}
-                onChange={e => { setAdminInput(e.target.value); setAdminError(false) }}
+                type="email"
+                placeholder="Email"
+                value={adminEmail}
+                onChange={e => { setAdminEmail(e.target.value); setAdminError(false) }}
                 onKeyDown={e => { if (e.key === 'Escape') closeAdminPrompt() }}
                 autoFocus
               />
+              <input
+                className="score-edit-input"
+                type="password"
+                placeholder="Password"
+                value={adminPassword}
+                onChange={e => { setAdminPassword(e.target.value); setAdminError(false) }}
+                onKeyDown={e => { if (e.key === 'Escape') closeAdminPrompt() }}
+              />
             </form>
-            {adminError && <div className="admin-error">Incorrect passphrase</div>}
+            {adminError && <div className="admin-error">Incorrect email or password</div>}
             <div className="score-edit-actions">
               <button className="btn score-edit-cancel" onClick={closeAdminPrompt}>Cancel</button>
-              <button className="btn score-edit-confirm" onClick={submitAdminKey}>Unlock</button>
+              <button className="btn score-edit-confirm" onClick={submitAdminKey}>Sign In</button>
             </div>
           </div>
         </div>
@@ -453,6 +477,9 @@ export default function App() {
                     {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                   </button>
                 </div>
+                <div className="admin-box-row">
+                  <button className="btn score-edit-cancel" onClick={signOut}>Sign Out</button>
+                </div>
               </div>
             )}
 
@@ -475,7 +502,7 @@ export default function App() {
               <Chat
                 name={chatName}
                 isAdmin={isAdmin}
-                onChangeName={() => { localStorage.removeItem('chat_name'); localStorage.removeItem('admin_unlocked'); setChatName(null); setIsAdmin(false) }}
+                onChangeName={() => { localStorage.removeItem('chat_name'); setChatName(null) }}
               />
             ) : (
               <JoinPrompt onJoin={name => { localStorage.setItem('chat_name', name); setChatName(name) }} />
