@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 
 function formatAge(isoString) {
@@ -54,7 +55,10 @@ export default function Chat({ name, isAdmin, onChangeName }) {
     const saved = parseInt(localStorage.getItem('chat_font_idx'), 10)
     return isNaN(saved) ? 1 : Math.min(Math.max(saved, 0), FONT_SIZES.length - 1)
   })
+  const [unreadCount, setUnreadCount] = useState(0)
   const bottomRef = useRef(null)
+  const chatRef = useRef(null)
+  const chatVisibleRef = useRef(false)
 
   function changeFontSize(delta) {
     setFontIdx(prev => {
@@ -66,6 +70,19 @@ export default function Chat({ name, isAdmin, onChangeName }) {
 
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [])
+
+  // Track whether the chat section is visible in the viewport
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        chatVisibleRef.current = entry.isIntersecting
+        if (entry.isIntersecting) setUnreadCount(0)
+      },
+      { threshold: 0.1 }
+    )
+    if (chatRef.current) observer.observe(chatRef.current)
+    return () => observer.disconnect()
   }, [])
 
   useEffect(() => {
@@ -86,7 +103,11 @@ export default function Chat({ name, isAdmin, onChangeName }) {
             if (prev.some(m => m.id === payload.new.id)) return prev
             return [...prev, payload.new]
           })
-          setTimeout(scrollToBottom, 50)
+          if (chatVisibleRef.current) {
+            setTimeout(scrollToBottom, 50)
+          } else {
+            setUnreadCount(prev => prev + 1)
+          }
         }
       )
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' },
@@ -148,8 +169,13 @@ export default function Chat({ name, isAdmin, onChangeName }) {
     setActiveMsgId(prev => prev === msgId ? null : msgId)
   }
 
+  function handlePillClick() {
+    setUnreadCount(0)
+    scrollToBottom()
+  }
+
   return (
-    <div className="chat" style={{ fontSize: FONT_SIZES[fontIdx] + 'px' }}>
+    <div ref={chatRef} className="chat" style={{ fontSize: FONT_SIZES[fontIdx] + 'px' }}>
       <div className="chat-header">
         <span className="chat-title">Parent Chat</span>
         <div className="chat-header-right">
@@ -224,6 +250,13 @@ export default function Chat({ name, isAdmin, onChangeName }) {
           Send
         </button>
       </form>
+
+      {unreadCount > 0 && createPortal(
+        <button className="new-messages-pill" onClick={handlePillClick}>
+          💬 {unreadCount} new message{unreadCount !== 1 ? 's' : ''}
+        </button>,
+        document.body
+      )}
     </div>
   )
 }
