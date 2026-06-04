@@ -15,6 +15,7 @@ const MOMENTS = [
   { id: 'stoppage_water',  label: 'Stoppage: Water Break', emoji: '💧', color: '#0099cc', vibrate: [100, 50, 100] },
   { id: 'play_resumed',    label: 'Play Resumed!',         emoji: '▶️', color: '#22c55e', vibrate: [80, 30, 80, 30, 200] },
   { id: 'yellow',          label: 'Yellow Card!',          emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
+  { id: 'red',             label: 'Red Card!',             emoji: '🟥', color: '#CC0000', vibrate: [300, 100, 300, 100, 500] },
   { id: 'pk',              label: 'Penalty Kick',          emoji: '🥅', color: '#FF1493', vibrate: [300, 100, 300] },
 ]
 
