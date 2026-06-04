@@ -1222,14 +1222,9 @@ body {
   border-radius: var(--radius);
 }
 /* PK active: shrink main score, enlarge PK section */
-.scoreboard-pk-active .score-number,
-.scoreboard-pk-final .score-number {
-  font-size: clamp(2rem, 10vw, 2.8rem);
-  transition: font-size 0.3s ease;
-}
 .scoreboard-pk-active .score-team-name,
 .scoreboard-pk-final .score-team-name {
-  font-size: 0.52rem;
+  font-size: 1.6rem;
 }
 .scoreboard-pk-active .pk-display {
   margin: 4px 10px 8px;
@@ -1246,26 +1241,26 @@ body {
 }
 .scoreboard-pk-active .pk-display-label,
 .scoreboard-pk-final .pk-display-label {
-  font-size: 0.72rem;
+  font-size: 1rem;
   letter-spacing: 0.2em;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 }
 .scoreboard-pk-active .pk-circle,
 .scoreboard-pk-final .pk-circle {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
 }
 .scoreboard-pk-active .pk-circles-row,
 .scoreboard-pk-final .pk-circles-row {
-  max-width: calc(5 * 34px + 4 * 5px);
+  max-width: calc(5 * 44px + 4 * 6px);
 }
 .scoreboard-pk-active .pk-display-num,
 .scoreboard-pk-final .pk-display-num {
-  font-size: clamp(2.6rem, 13vw, 3.8rem);
+  font-size: clamp(5rem, 20vw, 8rem);
 }
 .scoreboard-pk-active .pk-display-dash,
 .scoreboard-pk-final .pk-display-dash {
-  font-size: 2rem;
+  font-size: 3.5rem;
 }
 @keyframes pk-tension-pulse {
   0%, 100% {
