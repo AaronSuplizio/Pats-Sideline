@@ -48,7 +48,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState(null)
-  const lastSentRef = useRef(0)
+  const recentSendsRef = useRef([])
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [activeMsgId, setActiveMsgId] = useState(null)
   const [fontIdx, setFontIdx] = useState(() => {
@@ -125,11 +125,12 @@ export default function Chat({ name, isAdmin, onChangeName }) {
     const text = input.trim()
     if (!text || sending) return
     const now = Date.now()
-    if (now - lastSentRef.current < 2000) {
+    recentSendsRef.current = recentSendsRef.current.filter(t => now - t < 10000)
+    if (recentSendsRef.current.length >= 5) {
       setSendError('Slow down — wait a moment before sending again.')
       return
     }
-    lastSentRef.current = now
+    recentSendsRef.current.push(now)
     setSending(true)
     setSendError(null)
     setInput('')
