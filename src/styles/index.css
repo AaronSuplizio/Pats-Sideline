@@ -246,7 +246,7 @@ body {
 }
 .score-team-name {
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -256,7 +256,7 @@ body {
 
 .score-number {
   font-family: var(--font-display);
-  font-size: clamp(5.5rem, 26vw, 7rem);
+  font-size: clamp(12rem, 55vw, 22rem);
   font-weight: 700;
   line-height: 1;
   display: block;
@@ -285,10 +285,10 @@ body {
   background: var(--accent);
   color: var(--bg);
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 1.4rem;
   font-weight: 700;
   letter-spacing: 0.06em;
-  padding: 4px 12px;
+  padding: 6px 18px;
   border-radius: 6px;
   white-space: nowrap;
 }
@@ -427,7 +427,7 @@ body {
 }
 .timer-label {
   font-family: var(--font-display);
-  font-size: 0.68rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -435,7 +435,7 @@ body {
 }
 .timer-display {
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 18vw, 5.5rem);
+  font-size: clamp(3rem, 15vw, 5rem);
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.04em;
@@ -505,14 +505,14 @@ body {
 }
 .timer-countdown-label {
   font-family: var(--font-display);
-  font-size: 0.6rem;
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.18em;
   color: var(--fg-muted);
 }
 .timer-countdown-display {
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 7vw, 2rem);
+  font-size: clamp(1.8rem, 9vw, 2.6rem);
   font-weight: 700;
   letter-spacing: 0.06em;
   color: var(--fg-muted);
@@ -1861,9 +1861,9 @@ body {
 
   /* Scoreboard: more padding and much larger scores on desktop */
   .scoreboard { padding: 36px 32px 40px; }
-  .score-number { font-size: clamp(6rem, 10vw, 12rem); }
-  .score-team-name { font-size: 1rem; letter-spacing: 0.18em; }
-  .half-badge { font-size: 1rem; padding: 6px 16px; }
+  .score-number { font-size: clamp(14rem, 18vw, 26rem); }
+  .score-team-name { font-size: 2rem; letter-spacing: 0.18em; }
+  .half-badge { font-size: 1.8rem; padding: 8px 24px; }
 
   /* Hide mobile-only resize handle */
   .chat-resize-handle { display: none; }

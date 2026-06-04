@@ -442,30 +442,34 @@ export default function App() {
           />
 
           <section className="controls-section">
-            <div className="team-cards">
-              <div className="team-card">
-                <div className="team-card-name pats-label">PATS</div>
-                <ScoreControls team="pats" onAdjust={adjustScore} />
+            {isAdmin && (
+              <div className="team-cards">
+                <div className="team-card">
+                  <div className="team-card-name pats-label">PATS</div>
+                  <ScoreControls team="pats" onAdjust={adjustScore} />
+                </div>
+                <div className="team-card-divider" />
+                <div className="team-card">
+                  <div className="team-card-name opponent-label">OPPONENT</div>
+                  <ScoreControls team="opponent" onAdjust={adjustScore} />
+                </div>
               </div>
-              <div className="team-card-divider" />
-              <div className="team-card">
-                <div className="team-card-name opponent-label">OPPONENT</div>
-                <ScoreControls team="opponent" onAdjust={adjustScore} />
-              </div>
-            </div>
+            )}
 
-            <div className="half-card">
-              <div className="half-card-label">HALF</div>
-              <HalfControls
-                half={game.half}
-                onSetHalf={setHalf}
-                isAdmin={isAdmin}
-                halftimeActive={game.halftime_active}
-                onToggleHalftime={toggleHalftime}
-                pkMode={game.pk_mode}
-                onTogglePkMode={togglePkMode}
-              />
-            </div>
+            {isAdmin && (
+              <div className="half-card">
+                <div className="half-card-label">HALF</div>
+                <HalfControls
+                  half={game.half}
+                  onSetHalf={setHalf}
+                  isAdmin={isAdmin}
+                  halftimeActive={game.halftime_active}
+                  onToggleHalftime={toggleHalftime}
+                  pkMode={game.pk_mode}
+                  onTogglePkMode={togglePkMode}
+                />
+              </div>
+            )}
 
             {isAdmin && (
               <div className="admin-box">
