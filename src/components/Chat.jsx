@@ -47,6 +47,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState(null)
+  const lastSentRef = useRef(0)
   const [confirmingClear, setConfirmingClear] = useState(false)
   const [activeMsgId, setActiveMsgId] = useState(null)
   const [fontIdx, setFontIdx] = useState(() => {
@@ -102,6 +103,12 @@ export default function Chat({ name, isAdmin, onChangeName }) {
     e.preventDefault()
     const text = input.trim()
     if (!text || sending) return
+    const now = Date.now()
+    if (now - lastSentRef.current < 2000) {
+      setSendError('Slow down — wait a moment before sending again.')
+      return
+    }
+    lastSentRef.current = now
     setSending(true)
     setSendError(null)
     setInput('')

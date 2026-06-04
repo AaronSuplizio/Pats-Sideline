@@ -9,6 +9,10 @@ import Chat, { JoinPrompt } from './components/Chat'
 import Moments from './components/Moments'
 import Timer from './components/Timer'
 
+function safeParseKicks(str) {
+  try { return JSON.parse(str || '[]') } catch { return [] }
+}
+
 const DEFAULT_GAME = {
   id: 1,
   pats_score: 0,
@@ -145,7 +149,7 @@ export default function App() {
   function setPkKick(team, index, result) {
     const kicksKey = team === 'pats' ? 'pats_pk_kicks' : 'opponent_pk_kicks'
     const scoreKey = team === 'pats' ? 'pats_pk_score' : 'opponent_pk_score'
-    const current = JSON.parse(game[kicksKey] || '[]')
+    const current = safeParseKicks(game[kicksKey])
     const next = result === null ? current.slice(0, index) : [...current.slice(0, index), result]
     const nextStr = JSON.stringify(next)
     const score = next.filter(k => k === 'goal').length
@@ -411,8 +415,8 @@ export default function App() {
             halftimeActive={game.halftime_active}
             gameOver={game.game_over}
             pkMode={game.pk_mode}
-            patsKicks={JSON.parse(game.pats_pk_kicks || '[]')}
-            oppKicks={JSON.parse(game.opponent_pk_kicks || '[]')}
+            patsKicks={safeParseKicks(game.pats_pk_kicks)}
+            oppKicks={safeParseKicks(game.opponent_pk_kicks)}
             isAdmin={isAdmin}
             onSetKick={setPkKick}
             onSetScore={(team, value) => {
