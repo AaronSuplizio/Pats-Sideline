@@ -134,8 +134,8 @@ export default function Scoreboard({
             <div className="score-team-name pats-name">PATS</div>
             <AnimatedScore
               value={patsScore}
-              extraClass="pats-score-color score-tappable"
-              onClick={() => openEdit('pats', patsScore)}
+              extraClass={`pats-score-color${isAdmin ? ' score-tappable' : ''}`}
+              onClick={isAdmin ? () => openEdit('pats', patsScore) : undefined}
             />
           </div>
 
@@ -155,8 +155,8 @@ export default function Scoreboard({
             <div className="score-team-name opponent-name">OPP</div>
             <AnimatedScore
               value={opponentScore}
-              extraClass="opponent-score-color score-tappable"
-              onClick={() => openEdit('opponent', opponentScore)}
+              extraClass={`opponent-score-color${isAdmin ? ' score-tappable' : ''}`}
+              onClick={isAdmin ? () => openEdit('opponent', opponentScore) : undefined}
             />
           </div>
         </div>
