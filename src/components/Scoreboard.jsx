@@ -62,11 +62,17 @@ export default function Scoreboard({
   patsScore, opponentScore, half, onSetScore,
   halftimeActive, gameOver, pkMode,
   patsKicks, oppKicks, isAdmin, onSetKick,
+  chatName, onSetName,
 }) {
   const [editing, setEditing] = useState(null)
   const [editValue, setEditValue] = useState('')
   const [kickModal, setKickModal] = useState(null)
+  const [namePromptOpen, setNamePromptOpen] = useState(false)
+  const [pendingEdit, setPendingEdit] = useState(null)
+  const [nameInput, setNameInput] = useState('')
+  const [nameError, setNameError] = useState(false)
   const inputRef = useRef(null)
+  const nameInputRef = useRef(null)
 
   const patsKicksArr = patsKicks ?? []
   const oppKicksArr = oppKicks ?? []
@@ -74,9 +80,30 @@ export default function Scoreboard({
   const oppGoals = oppKicksArr.filter(k => k === 'goal').length
 
   function openEdit(team, current) {
+    if (!chatName) {
+      setPendingEdit({ team, current })
+      setNameInput('')
+      setNameError(false)
+      setNamePromptOpen(true)
+      setTimeout(() => nameInputRef.current?.focus(), 50)
+      return
+    }
     setEditing(team)
     setEditValue(String(current))
     setTimeout(() => { inputRef.current?.select() }, 50)
+  }
+
+  function confirmName() {
+    const trimmed = nameInput.trim()
+    if (!trimmed) { setNameError(true); return }
+    onSetName(trimmed)
+    setNamePromptOpen(false)
+    if (pendingEdit) {
+      setEditing(pendingEdit.team)
+      setEditValue(String(pendingEdit.current))
+      setTimeout(() => { inputRef.current?.select() }, 50)
+      setPendingEdit(null)
+    }
   }
 
   function confirm() {
@@ -161,6 +188,31 @@ export default function Scoreboard({
           </div>
         )}
       </div>
+
+      {namePromptOpen && (
+        <div className="score-edit-overlay" onClick={() => setNamePromptOpen(false)}>
+          <div className="score-edit-card" onClick={e => e.stopPropagation()}>
+            <div className="score-edit-title">Enter Your Name</div>
+            <div className="score-edit-subtitle">Required to edit the score</div>
+            <input
+              ref={nameInputRef}
+              className="score-edit-input"
+              type="text"
+              placeholder="Your name"
+              maxLength={30}
+              value={nameInput}
+              onChange={e => { setNameInput(e.target.value); setNameError(false) }}
+              onKeyDown={e => { if (e.key === 'Enter') confirmName(); if (e.key === 'Escape') setNamePromptOpen(false) }}
+              autoFocus
+            />
+            {nameError && <div className="admin-error">Please enter your name</div>}
+            <div className="score-edit-actions">
+              <button className="btn score-edit-cancel" onClick={() => setNamePromptOpen(false)}>Cancel</button>
+              <button className="btn score-edit-confirm" onClick={confirmName}>Continue</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editing && (
         <div className="score-edit-overlay" onClick={() => setEditing(null)}>

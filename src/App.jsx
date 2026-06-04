@@ -61,6 +61,8 @@ export default function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('app_theme') || 'light')
   const [pkMomentTrigger, setPkMomentTrigger] = useState(null)
   const [pkOverlay, setPkOverlay] = useState(null)
+  const [scoreNotice, setScoreNotice] = useState(null)
+  const scoreNoticeTimerRef = useRef(null)
   const themeChannelRef = useRef(null)
   const halftimeChannelRef = useRef(null)
   const gameOverChannelRef = useRef(null)
@@ -419,11 +421,18 @@ export default function App() {
             oppKicks={safeParseKicks(game.opponent_pk_kicks)}
             isAdmin={isAdmin}
             onSetKick={setPkKick}
+            chatName={chatName}
+            onSetName={name => { localStorage.setItem('chat_name', name); setChatName(name) }}
             onSetScore={(team, value) => {
               const key = team === 'pats' ? 'pats_score' : 'opponent_score'
               const patch = { pats_score: game.pats_score, opponent_score: game.opponent_score, half: game.half, [key]: value }
               setGame(prev => ({ ...prev, ...patch, updated_at: new Date().toISOString(), updated_by: chatName }))
               persistAs(patch).then(err => { if (err) { setDbError(`Save failed: ${err.message}`); fetchGame() } })
+              if (chatName) {
+                if (scoreNoticeTimerRef.current) clearTimeout(scoreNoticeTimerRef.current)
+                setScoreNotice({ name: chatName, key: Date.now() })
+                scoreNoticeTimerRef.current = setTimeout(() => setScoreNotice(null), 2800)
+              }
             }}
           />
 
@@ -530,6 +539,14 @@ export default function App() {
             {pkOverlay.type === 'opp_goal' && 'Opponent Scores'}
             {pkOverlay.type === 'opp_miss' && 'OPPONENTS MISS!'}
           </div>
+        </div>,
+        document.body
+      )}
+
+      {scoreNotice && createPortal(
+        <div key={scoreNotice.key} className="score-notice-toast">
+          <div className="score-notice-text">Score updated</div>
+          <div className="score-notice-from">by {scoreNotice.name}</div>
         </div>,
         document.body
       )}
