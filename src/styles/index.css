@@ -281,6 +281,15 @@ body {
   align-items: center;
   position: relative;
 }
+.half-badge-sizer {
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+}
 .scoreboard-center-mid {
   flex: 1;
   display: flex;
@@ -1028,9 +1037,9 @@ body {
   background: #0099cc;
   color: #fff;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 4.5vw, 1.8rem);
+  font-size: clamp(0.95rem, 3.3vw, 1.32rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   padding: 8px 18px;
   border-radius: 6px;
   white-space: nowrap;
@@ -1040,31 +1049,22 @@ body {
   background: #ffa500;
   color: #000;
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 4.5vw, 1.8rem);
+  font-size: clamp(0.95rem, 3.3vw, 1.32rem);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   padding: 8px 18px;
   border-radius: 6px;
   white-space: nowrap;
   animation: halftimePulse 1.5s ease infinite;
 }
+
 .gameover-badge {
   background: var(--red);
   color: #fff;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  padding: 3px 8px;
-  border-radius: 4px;
 }
 .pk-badge {
   background: #7c3aed;
   color: #fff;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  padding: 3px 10px;
-  border-radius: 4px;
   animation: halftimePulse 1.8s ease infinite;
 }
 

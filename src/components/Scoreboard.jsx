@@ -140,6 +140,7 @@ export default function Scoreboard({
           </div>
 
           <div className="scoreboard-center">
+            <div className="half-badge halftime-badge half-badge-sizer" aria-hidden="true">HALFTIME</div>
             {gameOver
               ? <div className="half-badge gameover-badge">FINAL</div>
               : pkMode
