@@ -795,25 +795,20 @@ body {
   gap: 8px;
   align-items: stretch;
 }
-.admin-box-row .btn-theme-toggle {
-  flex: 1;
+.admin-box-row > button {
   padding: 12px;
   font-size: 0.85rem;
-  letter-spacing: 0.12em;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  border-width: 2px;
+  white-space: nowrap;
 }
-.admin-box-row .btn-gameover {
-  flex: 1;
-}
-.admin-box-row .btn-waterbreak {
-  flex: 9;
-}
-.admin-box-row .btn-playstopped {
-  flex: 11;
-}
-.admin-signout {
-  flex: 1;
-  width: 100%;
-}
+.admin-box-row .btn-gameover  { flex: 1; }
+.admin-box-row .btn-theme-toggle { flex: 1; }
+.admin-box-row .btn-waterbreak { flex: 9; }
+.admin-box-row .btn-playstopped { flex: 11; }
+.admin-signout { flex: 1; width: 100%; }
 .admin-box-label {
   position: absolute;
   top: -9px;
@@ -1031,11 +1026,13 @@ body {
 .playstopped-badge {
   background: #ffa500;
   color: #000;
-  font-size: 0.55rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 4.5vw, 1.8rem);
   font-weight: 700;
-  letter-spacing: 0.1em;
-  padding: 3px 8px;
-  border-radius: 4px;
+  letter-spacing: 0.04em;
+  padding: 8px 18px;
+  border-radius: 6px;
+  white-space: nowrap;
   animation: halftimePulse 1.5s ease infinite;
 }
 .gameover-badge {

@@ -452,6 +452,7 @@ export default function App() {
             half={game.half}
             halftimeActive={game.halftime_active}
             waterBreakActive={waterBreakActive}
+            playPausedActive={playPausedActive}
             gameOver={game.game_over}
             pkMode={game.pk_mode}
             patsKicks={safeParseKicks(game.pats_pk_kicks)}
