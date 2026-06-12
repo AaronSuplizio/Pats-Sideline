@@ -63,10 +63,12 @@ export default function App() {
   const [pkOverlay, setPkOverlay] = useState(null)
   const [scoreNotice, setScoreNotice] = useState(null)
   const scoreNoticeTimerRef = useRef(null)
+  const [waterBreakActive, setWaterBreakActive] = useState(false)
   const themeChannelRef = useRef(null)
   const halftimeChannelRef = useRef(null)
   const gameOverChannelRef = useRef(null)
   const pkChannelRef = useRef(null)
+  const waterBreakChannelRef = useRef(null)
 
   useEffect(() => {
     if (!pkOverlay) return
@@ -173,6 +175,12 @@ export default function App() {
       setPkOverlay(overlay)
       pkChannelRef.current?.send({ type: 'broadcast', event: 'pkoverlay', payload: { type: 'opp_miss' } })
     }
+  }
+
+  function toggleWaterBreak() {
+    const next = !waterBreakActive
+    setWaterBreakActive(next)
+    waterBreakChannelRef.current?.send({ type: 'broadcast', event: 'waterbreak', payload: { active: next } })
   }
 
   function toggleTheme() {
@@ -314,6 +322,16 @@ export default function App() {
       })
       .subscribe()
     return () => { supabase.removeChannel(gameOverChannelRef.current) }
+  }, [])
+
+  useEffect(() => {
+    waterBreakChannelRef.current = supabase
+      .channel('game_waterbreak')
+      .on('broadcast', { event: 'waterbreak' }, ({ payload }) => {
+        setWaterBreakActive(payload.active)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(waterBreakChannelRef.current) }
   }, [])
 
   useEffect(() => {
@@ -495,6 +513,14 @@ export default function App() {
                   </button>
                 </div>
                 <div className="admin-box-row">
+                  <button
+                    className={`btn-waterbreak${waterBreakActive ? ' btn-waterbreak-active' : ''}`}
+                    onClick={toggleWaterBreak}
+                  >
+                    💧 {waterBreakActive ? 'END WATER BREAK' : 'WATER BREAK'}
+                  </button>
+                </div>
+                <div className="admin-box-row">
                   <button className="btn score-edit-cancel" onClick={signOut}>Sign Out</button>
                 </div>
               </div>
@@ -547,6 +573,14 @@ export default function App() {
         <div key={scoreNotice.key} className="score-notice-toast">
           <div className="score-notice-text">Score updated</div>
           <div className="score-notice-from">by {scoreNotice.name}</div>
+        </div>,
+        document.body
+      )}
+
+      {waterBreakActive && createPortal(
+        <div className="waterbreak-overlay">
+          <div className="waterbreak-overlay-emoji">💧</div>
+          <div className="waterbreak-overlay-text">Water Break</div>
         </div>,
         document.body
       )}
