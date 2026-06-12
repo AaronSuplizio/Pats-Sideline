@@ -184,6 +184,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
     const isLiked = likedBy.includes(chatUserId)
     const newLikedBy = isLiked ? likedBy.filter(id => id !== chatUserId) : [...likedBy, chatUserId]
     const newLikes = newLikedBy.length
+    if (newLikes === 0) setActiveMsgId(null)
     setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, likes: newLikes, liked_by: JSON.stringify(newLikedBy) } : m))
     await supabase.from('chat_messages').update({ likes: newLikes, liked_by: JSON.stringify(newLikedBy) }).eq('id', msg.id)
   }
