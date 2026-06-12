@@ -246,7 +246,7 @@ export default function Chat({ name, isAdmin, onChangeName }) {
             <div
               key={msg.id}
               className={`chat-msg ${isMyMsg ? 'chat-msg-mine' : ''} ${isActive ? 'chat-msg-active' : ''}`}
-              onClick={canDelete ? () => toggleActive(msg.id) : undefined}
+              onClick={() => toggleActive(msg.id)}
             >
               <div className="chat-msg-meta">
                 <span className="chat-msg-name">{msg.name}</span>
