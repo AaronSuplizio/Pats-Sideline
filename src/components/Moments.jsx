@@ -11,7 +11,7 @@ const MOMENTS = [
   { id: 'footwork',        label: 'Check the footwork!',   emoji: '👟', color: '#FF6B35', vibrate: [80, 30, 80, 30, 80] },
   { id: 'pass',            label: 'What a pass!',          emoji: '🎯', color: '#a855f7', vibrate: [150, 60, 200] },
   { id: 'save',            label: 'What a save!',          emoji: '🧤', color: '#22c55e', vibrate: [200, 50, 200, 50, 400] },
-  { id: 'play_resumed',    label: 'Play Resumed!',         emoji: '▶️', color: '#22c55e', vibrate: [80, 30, 80, 30, 200] },
+  { id: 'freekick',        label: 'Free Kick!',            emoji: '⚽', color: '#FF6B35', vibrate: [100, 40, 200] },
   { id: 'yellow',          label: 'Yellow Card!',          emoji: '🟨', color: '#FFD700', vibrate: [200, 60, 300] },
   { id: 'red',             label: 'Red Card!',             emoji: '🟥', color: '#CC0000', vibrate: [300, 100, 300, 100, 500] },
   { id: 'pk',              label: 'Penalty Kick',          emoji: '🥅', color: '#FF1493', vibrate: [300, 100, 300] },
