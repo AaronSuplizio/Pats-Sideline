@@ -233,7 +233,7 @@ body {
 }
 .scoreboard-inner {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: space-between;
   gap: 8px;
 }
@@ -279,7 +279,18 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+}
+.scoreboard-center-mid {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scoreboard-center-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 .half-badge {
   background: var(--accent);
@@ -298,7 +309,6 @@ body {
   font-weight: 700;
   color: var(--border);
   line-height: 1;
-  margin-top: 4px;
 }
 
 /* ── Score edit modal ────────────────────────────────────────────── */

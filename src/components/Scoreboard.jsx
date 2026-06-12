@@ -148,9 +148,13 @@ export default function Scoreboard({
               ? <div className="half-badge halftime-badge">HALFTIME</div>
               : <div className="half-badge">{HALF_LABELS[half - 1] ?? '1st'} HALF</div>
             }
-            <div className="score-colon">:</div>
-            {waterBreakActive && <div className="half-badge waterbreak-badge">WATER BREAK</div>}
-            {playPausedActive && <div className="half-badge playstopped-badge">GAME PAUSED</div>}
+            <div className="scoreboard-center-mid">
+              <div className="score-colon">:</div>
+            </div>
+            <div className="scoreboard-center-bottom">
+              {waterBreakActive && <div className="half-badge waterbreak-badge">WATER BREAK</div>}
+              {playPausedActive && <div className="half-badge playstopped-badge">GAME PAUSED</div>}
+            </div>
           </div>
 
           <div className="score-block">
