@@ -1829,6 +1829,36 @@ body {
 
 .chat-msg-mine:hover .chat-delete-btn,
 .chat-msg-active .chat-delete-btn { display: block; }
+.chat-msg-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+}
+.chat-like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 99px;
+  padding: 2px 7px 2px 5px;
+  font-size: 0.72em;
+  line-height: 1.4;
+  cursor: pointer;
+  color: var(--fg-muted);
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.chat-like-btn-has-likes {
+  border-color: var(--border);
+  background: var(--dim);
+}
+.chat-like-btn-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 208, 0, 0.12);
+}
 .chat-msg-bubble {
   background: var(--dim);
   border-radius: 12px 12px 12px 3px;

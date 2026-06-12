@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '../supabaseClient'
 
+function safeParseArr(str) {
+  try { return JSON.parse(str || '[]') } catch { return [] }
+}
+
 function formatAge(isoString) {
   const s = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000)
   if (s < 5) return 'just now'
@@ -44,6 +48,14 @@ function JoinPrompt({ onJoin }) {
 const FONT_SIZES = [13, 15, 17, 20, 24, 28, 34]
 
 export default function Chat({ name, isAdmin, onChangeName }) {
+  const [chatUserId] = useState(() => {
+    let id = localStorage.getItem('chat_user_id')
+    if (!id) {
+      id = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36)
+      localStorage.setItem('chat_user_id', id)
+    }
+    return id
+  })
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -110,6 +122,11 @@ export default function Chat({ name, isAdmin, onChangeName }) {
           }
         }
       )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, likes: payload.new.likes, liked_by: payload.new.liked_by } : m))
+        }
+      )
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'chat_messages' },
         (payload) => {
           setMessages(prev => prev.filter(m => m.id !== payload.old.id))
@@ -158,6 +175,17 @@ export default function Chat({ name, isAdmin, onChangeName }) {
   async function deleteMessage(id) {
     setMessages(prev => prev.filter(m => m.id !== id))
     await supabase.from('chat_messages').delete().eq('id', id)
+  }
+
+  async function toggleLike(msg, e) {
+    e.stopPropagation()
+    if (typeof msg.id !== 'number') return
+    const likedBy = safeParseArr(msg.liked_by)
+    const isLiked = likedBy.includes(chatUserId)
+    const newLikedBy = isLiked ? likedBy.filter(id => id !== chatUserId) : [...likedBy, chatUserId]
+    const newLikes = newLikedBy.length
+    setMessages(prev => prev.map(m => m.id === msg.id ? { ...m, likes: newLikes, liked_by: JSON.stringify(newLikedBy) } : m))
+    await supabase.from('chat_messages').update({ likes: newLikes, liked_by: JSON.stringify(newLikedBy) }).eq('id', msg.id)
   }
 
   async function clearAllMessages() {
@@ -211,6 +239,9 @@ export default function Chat({ name, isAdmin, onChangeName }) {
           const isMyMsg = msg.name === name && typeof msg.id === 'number'
           const canDelete = isMyMsg || isAdmin
           const isActive = msg.id === activeMsgId
+          const likedBy = safeParseArr(msg.liked_by)
+          const likeCount = likedBy.length
+          const isLiked = likedBy.includes(chatUserId)
           return (
             <div
               key={msg.id}
@@ -222,14 +253,24 @@ export default function Chat({ name, isAdmin, onChangeName }) {
                 <span className="chat-msg-time">{formatAge(msg.created_at)}</span>
               </div>
               <div className="chat-msg-bubble">{msg.message}</div>
-              {canDelete && (
-                <button
-                  className="chat-delete-btn"
-                  onClick={e => { e.stopPropagation(); deleteMessage(msg.id) }}
-                >
-                  {isMyMsg ? 'Unsend' : 'Delete'}
-                </button>
-              )}
+              <div className="chat-msg-actions">
+                {typeof msg.id === 'number' && (
+                  <button
+                    className={`chat-like-btn${isLiked ? ' chat-like-btn-active' : ''}${likeCount > 0 ? ' chat-like-btn-has-likes' : ''}`}
+                    onClick={e => toggleLike(msg, e)}
+                  >
+                    👍{likeCount > 0 ? ` ${likeCount}` : ''}
+                  </button>
+                )}
+                {canDelete && (
+                  <button
+                    className="chat-delete-btn"
+                    onClick={e => { e.stopPropagation(); deleteMessage(msg.id) }}
+                  >
+                    {isMyMsg ? 'Unsend' : 'Delete'}
+                  </button>
+                )}
+              </div>
             </div>
           )
         })}
