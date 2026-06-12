@@ -153,7 +153,7 @@ export default function Scoreboard({
             </div>
             <div className="scoreboard-center-bottom">
               {waterBreakActive && <div className="half-badge waterbreak-badge">WATER BREAK</div>}
-              {playPausedActive && <div className="half-badge playstopped-badge">GAME PAUSED</div>}
+              {playPausedActive && <div className="half-badge playstopped-badge">PLAY PAUSED</div>}
             </div>
           </div>
 
