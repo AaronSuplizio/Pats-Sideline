@@ -796,11 +796,23 @@ body {
   align-items: stretch;
 }
 .admin-box-row .btn-theme-toggle {
-  flex-shrink: 0;
-  min-width: 90px;
+  flex: 1;
+  padding: 12px;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
 }
 .admin-box-row .btn-gameover {
   flex: 1;
+}
+.admin-box-row .btn-waterbreak {
+  flex: 9;
+}
+.admin-box-row .btn-playstopped {
+  flex: 11;
+}
+.admin-signout {
+  flex: 1;
+  width: 100%;
 }
 .admin-box-label {
   position: absolute;
@@ -835,7 +847,7 @@ body {
   border: 2px solid #ffa500;
   border-radius: var(--radius-sm);
   font-family: var(--font-display);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   cursor: pointer;
@@ -858,9 +870,9 @@ body {
   border: 2px solid #0099cc;
   border-radius: var(--radius-sm);
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: all 0.15s;

@@ -64,11 +64,13 @@ export default function App() {
   const [scoreNotice, setScoreNotice] = useState(null)
   const scoreNoticeTimerRef = useRef(null)
   const [waterBreakActive, setWaterBreakActive] = useState(false)
+  const [playPausedActive, setPlayPausedActive] = useState(false)
   const themeChannelRef = useRef(null)
   const halftimeChannelRef = useRef(null)
   const gameOverChannelRef = useRef(null)
   const pkChannelRef = useRef(null)
   const waterBreakChannelRef = useRef(null)
+  const playPausedChannelRef = useRef(null)
 
   useEffect(() => {
     if (!pkOverlay) return
@@ -181,6 +183,12 @@ export default function App() {
     const next = !waterBreakActive
     setWaterBreakActive(next)
     waterBreakChannelRef.current?.send({ type: 'broadcast', event: 'waterbreak', payload: { active: next } })
+  }
+
+  function togglePlayPaused() {
+    const next = !playPausedActive
+    setPlayPausedActive(next)
+    playPausedChannelRef.current?.send({ type: 'broadcast', event: 'playpause', payload: { active: next } })
   }
 
   function toggleTheme() {
@@ -332,6 +340,16 @@ export default function App() {
       })
       .subscribe()
     return () => { supabase.removeChannel(waterBreakChannelRef.current) }
+  }, [])
+
+  useEffect(() => {
+    playPausedChannelRef.current = supabase
+      .channel('game_playpause')
+      .on('broadcast', { event: 'playpause' }, ({ payload }) => {
+        setPlayPausedActive(payload.active)
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(playPausedChannelRef.current) }
   }, [])
 
   useEffect(() => {
@@ -510,7 +528,7 @@ export default function App() {
                     {game.game_over ? 'CLEAR FINAL' : 'FINAL SCORE'}
                   </button>
                   <button className="btn-theme-toggle" onClick={toggleTheme}>
-                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    {theme === 'dark' ? 'LIGHT MODE' : 'DARK MODE'}
                   </button>
                 </div>
                 <div className="admin-box-row">
@@ -520,9 +538,15 @@ export default function App() {
                   >
                     💧 {waterBreakActive ? 'END WATER BREAK' : 'WATER BREAK'}
                   </button>
+                  <button
+                    className={`btn-playstopped${playPausedActive ? ' btn-playstopped-active' : ''}`}
+                    onClick={togglePlayPaused}
+                  >
+                    ⏸ {playPausedActive ? 'RESUME PLAY' : 'PLAY PAUSED'}
+                  </button>
                 </div>
                 <div className="admin-box-row">
-                  <button className="btn score-edit-cancel" onClick={signOut}>Sign Out</button>
+                  <button className="btn score-edit-cancel admin-signout" onClick={signOut}>Sign Out</button>
                 </div>
               </div>
             )}
