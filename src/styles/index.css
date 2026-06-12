@@ -806,8 +806,8 @@ body {
 }
 .admin-box-row .btn-gameover  { flex: 1; }
 .admin-box-row .btn-theme-toggle { flex: 1; }
-.admin-box-row .btn-waterbreak { flex: 9; }
-.admin-box-row .btn-playstopped { flex: 11; }
+.admin-box-row .btn-waterbreak { flex: 1; }
+.admin-box-row .btn-playstopped { flex: 1; }
 .admin-signout { flex: 1; width: 100%; }
 .admin-box-label {
   position: absolute;
