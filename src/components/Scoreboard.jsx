@@ -60,7 +60,7 @@ function PKCircleRow({ kicks, team, isAdmin, onSetKick, onOpenModal }) {
 
 export default function Scoreboard({
   patsScore, opponentScore, half, onSetScore,
-  halftimeActive, gameOver, pkMode,
+  halftimeActive, waterBreakActive, gameOver, pkMode,
   patsKicks, oppKicks, isAdmin, onSetKick,
   chatName, onSetName,
 }) {
@@ -149,6 +149,7 @@ export default function Scoreboard({
               : <div className="half-badge">{HALF_LABELS[half - 1] ?? '1st'} HALF</div>
             }
             <div className="score-colon">:</div>
+            {waterBreakActive && <div className="half-badge waterbreak-badge">WATER BREAK</div>}
           </div>
 
           <div className="score-block">

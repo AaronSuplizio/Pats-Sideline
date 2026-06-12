@@ -433,6 +433,7 @@ export default function App() {
             opponentScore={game.opponent_score}
             half={game.half}
             halftimeActive={game.halftime_active}
+            waterBreakActive={waterBreakActive}
             gameOver={game.game_over}
             pkMode={game.pk_mode}
             patsKicks={safeParseKicks(game.pats_pk_kicks)}
@@ -577,13 +578,6 @@ export default function App() {
         document.body
       )}
 
-      {waterBreakActive && createPortal(
-        <div className="waterbreak-overlay">
-          <div className="waterbreak-overlay-emoji">💧</div>
-          <div className="waterbreak-overlay-text">Water Break</div>
-        </div>,
-        document.body
-      )}
     </div>
   )
 }
